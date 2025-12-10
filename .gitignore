@@ -1,0 +1,20 @@
+# 系统文件相关
+.DS_Store
+
+# python 生成的文件
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# 虚拟环境相关 
+*venv
+
+# 缓存/输出
+storage/
+outputs/
+
+# 本地测试
+test*.py
