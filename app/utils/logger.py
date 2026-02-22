@@ -20,10 +20,13 @@ def init_logger():
         record["file"].path = f"./{relative_path}"
         # 返回修改后的格式字符串
         # 您可以根据需要调整这里的格式
-        _format = '<green>{time:%Y-%m-%d %H:%M:%S}</> | ' + \
-                  '<level>{level}</> | ' + \
-                  '"{file.path}:{line}":<blue> {function}</> ' + \
-                  '- <level>{message}</>' + "\n"
+        _format = (
+            '<green>{time:%Y-%m-%d %H:%M:%S}</> | '
+            '<level>{level}</> | '
+            '"{file.path}:{line}":<blue> {function}</> '
+            '- <level>{message}</>'
+            "\n"
+        )
         return _format
 
     logger.remove()
