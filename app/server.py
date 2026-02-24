@@ -10,7 +10,8 @@ from app.utils import sys_utils
 from app.routers import root_router
 from app.utils.logger import init_logger
 from app.utils.server import (
-    validation_exception_handler
+    validation_exception_handler,
+    http_exception_handler
 )
 
 
@@ -39,6 +40,7 @@ app.include_router(root_router)
 
 # 全局错误拦截器
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(Exception, http_exception_handler)
 
 # cors 设置
 cors_allow_origins = ["*"]
