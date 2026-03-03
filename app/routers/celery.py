@@ -1,7 +1,6 @@
 """
 Celery 异步任务示例路由
 提供具体的任务创建接口（如加法、睡眠、日志测试等）
-注意：任务状态查询和取消等通用操作请使用 /tasks 路由
 """
 from loguru import logger
 import time
@@ -13,42 +12,13 @@ from app.models.celery import (
     AddTaskRequest,
     SleepTaskRequest,
     LogTaskRequest,
-    CeleryStatusData,
     TaskData,
-    CeleryStatusResponse,
     TaskResponse,
 )
 from app.utils.celery_client import send_task
 
 
 router = create_router("celery")
-
-
-@router.get("/status", summary="检查 Celery 服务状态", response_model=CeleryStatusResponse)
-@exception_handler("检查 Celery 状态")
-async def celery_status():
-    """
-    检查 Celery 服务状态
-
-    Returns:
-        Celery 服务状态信息
-    """
-    # 发送一个简单的测试任务
-    result = send_task(
-        "celery_tasks.tasks.example.add_task",
-        args=[1, 1]
-    )
-    task_result = result.get(timeout=5)
-
-    return CeleryStatusResponse(
-        code=200,
-        data=CeleryStatusData(
-            status="healthy",
-            message="Celery Worker is available",
-            test_task_result=str(task_result),
-        ),
-        message="Celery Worker is available"
-    )
 
 
 @router.post("/tasks/add", summary="创建加法异步任务", response_model=TaskResponse)

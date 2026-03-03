@@ -24,12 +24,14 @@ service-template-fastapi/
 │   │   ├── base.py        # 基础模型
 │   │   ├── celery.py      # Celery 任务模型
 │   │   ├── example.py     # 示例模型
-│   │   └── exception.py   # 异常处理模型
+│   │   ├── exception.py   # 异常处理模型
+│   │   └── system.py      # 系统管理模型
 │   ├── routers/           # API 路由
 │   │   ├── __init__.py    # 路由聚合
 │   │   ├── base.py        # 路由基础类
 │   │   ├── celery.py      # Celery 任务路由
-│   │   └── example.py     # 示例路由
+│   │   ├── example.py     # 示例路由
+│   │   └── system.py      # 系统管理路由
 │   ├── utils/             # 工具函数
 │   │   ├── celery_client.py  # Celery 客户端
 │   │   ├── decorators.py  # 装饰器
@@ -129,6 +131,15 @@ ENV=prod python main.py
 
 - **Swagger UI**: http://localhost:8800/docs
 - **ReDoc**: http://localhost:8800/redoc
+
+### 接口分类说明
+
+项目采用模块化路由设计，主要接口分类如下：
+
+- **`/example/*`**: 示例接口
+- **`/celery/*`**: Celery 异步任务创建接口（加法、睡眠、日志测试等）
+- **`/tasks/*`**: 通用任务管理接口（状态查询、任务取消等）
+- **`/system/*`**: 系统管理接口（服务健康检查、组件状态监控等）
 
 ## 配置说明
 
@@ -267,7 +278,8 @@ POST `/example/` - 示例接口
 
 4. **调用异步任务**:
    - 访问 Swagger UI: http://localhost:8800/docs
-   - 查看 `/celery/*` 端点
+   - 查看 `/celery/*` 端点（创建任务）
+   - 查看 `/tasks/*` 端点（任务管理）
    - 或在代码中使用 `app.utils.celery_client.send_task()`
 
 ### 内置任务示例

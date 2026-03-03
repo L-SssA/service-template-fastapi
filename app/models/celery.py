@@ -33,23 +33,11 @@ class CustomTaskRequest(IBaseModel):
 
 
 # ============== Response Models ==============
-class CeleryStatusData(IBaseModel):
-    """Celery 状态数据"""
-    status: str
-    message: str
-    test_task_result: Optional[str] = None
-
-
 class TaskData(IBaseModel):
     """任务数据"""
     task_id: str
     status: str
     delay: Optional[int] = None
-
-
-class CeleryStatusResponse(BaseResponse):
-    """Celery 状态响应"""
-    data: CeleryStatusData
 
 
 class TaskResponse(BaseResponse):
