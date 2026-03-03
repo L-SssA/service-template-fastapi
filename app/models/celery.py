@@ -1,5 +1,6 @@
 """
 Celery 异步任务相关的模型定义
+注意：通用的任务管理模型（TaskInfo, CancelTaskRequest 等）已移至 app/models/task.py
 """
 from typing import Optional
 from app.models.base import IBaseModel, BaseResponse
@@ -31,21 +32,7 @@ class CustomTaskRequest(IBaseModel):
     kwargs: dict = {}
 
 
-class CancelTaskRequest(IBaseModel):
-    """取消任务请求模型"""
-    terminate: bool = False
-
-
 # ============== Response Models ==============
-class TaskInfo(IBaseModel):
-    """任务信息"""
-    task_id: str
-    status: str
-    result: Optional[str] = None
-    result_error: Optional[str] = None
-    error: Optional[str] = None
-
-
 class CeleryStatusData(IBaseModel):
     """Celery 状态数据"""
     status: str
@@ -68,13 +55,3 @@ class CeleryStatusResponse(BaseResponse):
 class TaskResponse(BaseResponse):
     """任务响应"""
     data: TaskData
-
-
-class TaskInfoResponse(BaseResponse):
-    """任务信息响应"""
-    data: TaskInfo
-
-
-class CancelTaskResponse(BaseResponse):
-    """取消任务响应"""
-    data: dict

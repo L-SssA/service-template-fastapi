@@ -1,5 +1,7 @@
 """
-Celery 异步任务路由
+Celery 异步任务示例路由
+提供具体的任务创建接口（如加法、睡眠、日志测试等）
+注意：任务状态查询和取消等通用操作请使用 /tasks 路由
 """
 from loguru import logger
 import time
@@ -11,23 +13,16 @@ from app.models.celery import (
     AddTaskRequest,
     SleepTaskRequest,
     LogTaskRequest,
-    CustomTaskRequest,
-    CancelTaskRequest,
-    TaskInfo,
     CeleryStatusData,
     TaskData,
     CeleryStatusResponse,
     TaskResponse,
-    TaskInfoResponse,
-    CancelTaskResponse,
 )
-from app.utils.celery_client import send_task, get_task_result, get_task_status, revoke_task
+from app.utils.celery_client import send_task
 
 
 router = create_router("celery")
 
-
-# ============== API Endpoints ==============
 
 @router.get("/status", summary="检查 Celery 服务状态", response_model=CeleryStatusResponse)
 @exception_handler("检查 Celery 状态")
@@ -140,70 +135,4 @@ async def create_log_task(request: LogTaskRequest):
             status="pending",
         ),
         message=f"Log task created: [{request.level.upper()}] {request.message}"
-    )
-
-
-@router.get("/tasks/{task_id}", summary="获取任务信息和结果", response_model=TaskInfoResponse)
-@exception_handler("获取任务信息")
-async def get_task_info(task_id: str):
-    """
-    获取任务信息和结果
-
-    Args:
-        task_id: 任务 ID
-
-    Returns:
-        任务状态和结果（如果已完成）
-    """
-    status = get_task_status(task_id)
-
-    task_info = TaskInfo(
-        task_id=task_id,
-        status=status,
-    )
-
-    # 如果任务已完成，尝试获取结果
-    if status == "SUCCESS":
-        try:
-            result = get_task_result(task_id, timeout=2)
-            task_info.result = str(result)
-        except Exception as e:
-            task_info.result_error = str(e)
-    elif status == "FAILURE":
-        try:
-            result = get_task_result(task_id, timeout=2)
-            task_info.error = str(result)
-        except Exception as e:
-            task_info.error = str(e)
-
-    return TaskInfoResponse(
-        code=200,
-        data=task_info,
-        message=f"Task status: {status}"
-    )
-
-
-@router.delete("/tasks/{task_id}", summary="取消/终止任务", response_model=CancelTaskResponse)
-@exception_handler("取消任务")
-async def cancel_task(task_id: str, request: CancelTaskRequest):
-    """
-    取消/终止任务
-
-    Args:
-        task_id: 任务 ID
-        request: 包含是否强制终止的参数
-
-    Returns:
-        操作结果
-    """
-    revoke_task(task_id, terminate=request.terminate)
-    action = "terminated" if request.terminate else "revoked"
-
-    return CancelTaskResponse(
-        code=200,
-        data={
-            "task_id": task_id,
-            "message": f"Task has been {action}",
-        },
-        message=f"Task has been {action}"
     )
