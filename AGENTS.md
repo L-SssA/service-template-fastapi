@@ -361,7 +361,58 @@ async def run_add_task(a: int, b: int):
 
 ## 🔧 六、开发最佳实践
 
-### 6.1 类型注解
+### 6.1 虚拟环境管理（重要）
+
+**本项目使用 uv 进行依赖管理和虚拟环境管理**
+
+#### 执行 Python 脚本的方式
+
+当需要运行或调试 Python 脚本时，必须使用以下方式之一：
+
+**方式 1：使用 `uv run` 命令（推荐）**
+
+```bash
+# 无需手动激活虚拟环境，uv run 会自动处理
+uv run python main.py
+uv run pytest tests/
+uv run celery -A celery_tasks worker --loglevel=info
+```
+
+**方式 2：先激活虚拟环境**
+
+```bash
+# 激活虚拟环境（项目根目录下）
+uv venv .venv
+.venv\Scripts\activate  # Windows PowerShell
+source .venv/bin/activate  # Linux/Mac
+
+# 然后可以直接使用 python 命令
+python main.py
+pytest tests/
+```
+
+#### AI Coding 注意事项
+
+- ⚠️ **不要直接使用系统 Python** - 这会导致依赖缺失
+- ⚠️ **调试失败时检查虚拟环境** - 确保使用了正确的 Python 解释器
+- ✅ **优先使用 `uv run`** - 这是最简单且不易出错的方式
+- ✅ **IDE 配置** - 将 IDE 的解释器设置为 `.venv` 中的 Python
+
+#### 常见问题排查
+
+```bash
+# 检查虚拟环境是否存在
+ls .venv/Scripts/python.exe  # Windows
+ls .venv/bin/python  # Linux/Mac
+
+# 重新创建虚拟环境
+uv venv .venv
+
+# 同步依赖
+uv sync
+```
+
+### 6.2 类型注解
 
 - 所有函数参数和返回值都应使用类型注解
 - 使用 `typing` 模块处理复杂类型
@@ -394,7 +445,7 @@ async def get_user(user_id: int):
     return database[user_id]
 ```
 
-### 6.3 日志记录
+### 6.4 日志记录
 
 使用 Loguru 进行结构化日志：
 
@@ -407,7 +458,7 @@ logger.warning("配置项缺失，使用默认值")
 logger.error("数据库连接失败")
 ```
 
-### 6.4 配置管理
+### 6.5 配置管理
 
 - 使用 TOML 文件管理配置
 - 不同环境使用不同的配置文件（`config.dev.toml`, `config.prod.toml`）
@@ -428,6 +479,7 @@ logger.error("数据库连接失败")
 - [ ] 类型注解是否完整？
 - [ ] 日志输出是否合理？
 - [ ] **当移动代码时，是否已从原位置删除已迁移的代码？**
+- [ ] **运行脚本时是否使用了 `uv run` 或已激活虚拟环境？**
 
 ### 文档更新检查
 
@@ -443,6 +495,32 @@ logger.error("数据库连接失败")
 ---
 
 ## 🎯 八、快速参考
+
+### uv 常用命令（重要）
+
+```bash
+# 运行 Python脚本（推荐）
+uv run python main.py
+uv run python your_script.py
+
+# 运行测试
+uv run pytest tests/
+
+# 启动 Celery Worker
+uv run celery -A celery_tasks worker --loglevel=info
+
+# 启动 Celery Beat
+uv run celery -A celery_tasks beat --loglevel=info
+
+# 安装依赖
+uv add package_name
+uv sync
+
+# 创建/激活虚拟环境
+uv venv .venv
+.venv\Scripts\activate  # Windows
+source .venv/bin/activate  # Linux/Mac
+```
 
 ### 新建功能模块流程
 
