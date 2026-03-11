@@ -3,7 +3,7 @@
 """
 import time
 from loguru import logger
-from celery_tasks import celery_app
+from celery_tasks.celery_app import app as celery_app
 
 
 @celery_app.task(name="celery_tasks.tasks.example.add_task")

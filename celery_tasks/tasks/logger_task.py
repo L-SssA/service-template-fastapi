@@ -3,7 +3,7 @@
 用于验证异步任务中的日志输出格式与主应用一致
 """
 from loguru import logger
-from celery_tasks import celery_app
+from celery_tasks.celery_app import app as celery_app
 
 
 @celery_app.task(name="celery_tasks.tasks.logger_task.log_message")

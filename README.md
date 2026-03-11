@@ -42,19 +42,25 @@ service-template-fastapi/
 │   │   └── tools.py       # 通用工具
 │   └── server.py          # FastAPI 应用实例
 ├── celery_tasks/          # Celery 异步任务模块
-│   ├── __init__.py        # Celery 实例初始化
+│   ├── __init__.py        # Celery 实例初始化和配置
 │   ├── worker.py          # Worker 启动入口
-│   ├── config.py          # Celery 配置
-│   └── tasks/             # 任务定义
+│   ├── beat.py            # Beat 调度器启动入口 ⭐
+│   ├── config.py          # Celery 配置（包含定时任务）
+│   ├── tasks/             # 异步任务定义
+│   │   ├── __init__.py
+│   │   ├── example.py     # 示例任务
+│   │   └── logger_task.py # 日志测试任务
+│   └── beats/             # 定时任务定义 ⭐
 │       ├── __init__.py
-│       ├── example.py     # 示例任务
-│       └── logger_task.py # 日志测试任务
+│       ├── example.py     # 示例定时任务
+│       └── business.py    # 业务定时任务
 ├── public/                # 静态资源
 │   └── index.html         # 默认首页
 ├── docs/                  # 文档目录
-│   └── CELERY_USAGE.md    # Celery 使用指南
+│   ├── CELERY_WORKER_USAGE.md    # Celery Worker 使用指南
+│   └── CELERY_BEAT_USAGE.md      # Celery Beat 定时任务使用指南
 ├── scripts/               # 脚本目录
-│   └── start_celery_worker.bat  # Worker 启动脚本 (Windows)
+│   └── start_celery.py    # Celery 统一启动脚本（跨平台）
 ├── config.dev.toml        # 开发环境配置
 ├── main.py                # 应用入口文件
 ├── pyproject.toml         # 项目配置和依赖
@@ -99,10 +105,10 @@ uv sync
 **步骤 1: 启动 Celery Worker** (新终端窗口)
 
 ```bash
-# Windows
-.\start_celery_worker.bat
+# Windows/Linux/macOS 统一使用 Python 脚本
+uv run python scripts/start_celery.py worker
 
-# Linux/macOS
+# 或者使用原生命令（不推荐）
 celery -A celery_tasks.worker worker --loglevel=info --pool=solo
 ```
 
@@ -140,6 +146,7 @@ ENV=prod python main.py
 - **`/celery/*`**: Celery 异步任务创建接口（加法、睡眠、日志测试等）
 - **`/tasks/*`**: 通用任务管理接口（状态查询、任务取消等）
 - **`/system/*`**: 系统管理接口（服务健康检查、组件状态监控等）
+- **定时任务**: Celery Beat 自动执行（日报、备份、清理等） ⭐
 
 ## 配置说明
 
@@ -240,20 +247,43 @@ POST `/example/` - 示例接口
 
 自动生成交互式 API 文档，支持 Swagger UI 和 ReDoc
 
-### 🔄 异步任务队列
+### 🔥 定时任务 (Celery Beat) ⭐
 
-基于 Celery + Redis 的完整异步任务解决方案，支持：
+基于 Celery Beat 的定时任务调度器，支持：
 
-- ✅ 分布式任务执行
-- ✅ 任务状态追踪（PENDING, STARTED, RETRY, SUCCESS, FAILURE）
-- ✅ 延迟任务和定时任务
-- ✅ 任务重试机制
-- ✅ 统一日志输出
-- ✅ 任务取消/终止功能
+- ✅ Crontab 表达式（每小时、每天、每周等）
+- ✅ 固定间隔执行（每 N 秒/分钟）
+- ✅ 丰富的任务类型（日报、备份、清理、同步等）
+- ✅ 统一的日志输出和错误处理
+- ✅ 灵活的调度配置
+
+内置定时任务示例：
+
+| 任务名称   | 功能说明           | 执行频率   |
+| ---------- | ------------------ | ---------- |
+| 打印时间   | 每分钟打印当前时间 | 每 60 秒   |
+| 清理会话   | 清理过期用户会话   | 每 30 分钟 |
+| 数据同步   | 同步外部数据       | 每小时整点 |
+| 统计计算   | 计算实时统计数据   | 每 15 分钟 |
+| 发送日报   | 生成并发送每日报告 | 每天 18:00 |
+| 数据库备份 | 执行数据库备份     | 每天 02:00 |
+
+**启动定时任务:**
+
+```bash
+# 方式 1: Worker + Beat 一体化（推荐，开发测试环境）
+uv run python scripts/start_celery.py all  # 跨平台统一命令
+
+# 方式 2: 分别启动 Worker 和 Beat（生产环境推荐）
+uv run python scripts/start_celery.py worker &  # Worker
+uv run python scripts/start_celery.py beat      # Beat（新终端）
+```
+
+详细使用指南请参考 [docs/CELERY_BEAT_USAGE.md](docs/CELERY_BEAT_USAGE.md)。
 
 ## 异步任务
 
-本项目集成了 Celery 提供异步任务处理能力。详细使用指南请参考 [docs/CELERY_USAGE.md](docs/CELERY_USAGE.md)。
+本项目集成了 Celery 提供异步任务处理能力。
 
 ### 快速开始
 
@@ -266,8 +296,8 @@ POST `/example/` - 示例接口
 2. **启动 Celery Worker** (新终端窗口):
 
    ```bash
-   .\start_celery_worker.bat  # Windows
-   celery -A celery_tasks.worker worker --loglevel=info --pool=solo  # Linux/macOS
+   # Windows/Linux/macOS 统一使用 Python 脚本
+   uv run python scripts/start_celery.py worker
    ```
 
 3. **启动 FastAPI 应用**:
@@ -296,6 +326,11 @@ POST `/example/` - 示例接口
 ```bash
 python test_celery_integration.py
 ```
+
+### 详细文档
+
+- **[Celery Worker 使用指南](docs/CELERY_WORKER_USAGE.md)** - 异步任务执行、配置和最佳实践
+- **[Celery Beat 定时任务使用指南](docs/CELERY_BEAT_USAGE.md)** - 定时任务调度和管理
 
 ## 开发指南
 
@@ -377,7 +412,7 @@ reload_debug = false
 
 ### Docker 部署
 
-```dockerfile
+``dockerfile
 FROM python:3.10-slim
 
 WORKDIR /app
@@ -386,7 +421,8 @@ RUN pip install uv && uv sync --frozen
 
 EXPOSE 8000
 CMD ["python", "main.py"]
-```
+
+````
 
 或者使用多阶段构建（包含 Celery Worker）：
 
@@ -405,7 +441,23 @@ CMD ["python", "main.py"]
 # Celery Worker
 FROM base as worker
 CMD ["celery", "-A", "celery_tasks.worker", "worker", "--loglevel=info"]
-```
+````
+
+## 下一步
+
+### 已完成的功能
+
+- [x] 实现定时任务 (Celery Beat) ⭐
+
+### 计划中的功能
+
+- [ ] 添加任务监控面板（如 Flower）
+- [ ] 实现任务优先级队列
+- [ ] 添加任务重试机制和死信队列
+- [ ] 集成任务执行时间统计
+- [ ] 添加任务依赖关系支持
+
+---
 
 ## 贡献指南
 

@@ -18,3 +18,7 @@ outputs/
 
 # 本地测试
 test*.py
+
+# Celery Beat 调度文件
+celerybeat-schedule.*
+celerybeat-schedule.db

@@ -201,7 +201,7 @@ celery_tasks/
 
 ```python
 # celery_tasks/tasks/example.py
-from celery_tasks import celery_app
+from celery_tasks.celery_app import app as celery_app
 from loguru import logger
 
 @celery_app.task(bind=True)
@@ -557,7 +557,7 @@ from app.models.base import IBaseModel, BaseResponse
 from app.routers.base import create_router
 
 # Celery 任务
-from celery_tasks import celery_app
+from celery_tasks.celery_app import app as celery_app
 
 # 工具函数
 from app.utils.celery_client import send_task

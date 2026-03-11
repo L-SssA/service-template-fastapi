@@ -35,7 +35,7 @@ def send_task(
         ...     countdown=10  # 延迟 10 秒执行
         ... )
     """
-    from celery_tasks import celery_app
+    from celery_tasks.celery_app import app as celery_app
 
     if args is None:
         args = []
@@ -67,7 +67,7 @@ def get_task_result(task_id: str, timeout: Optional[int] = None) -> Any:
     Raises:
         Exception: 任务执行失败时抛出异常
     """
-    from celery_tasks import celery_app
+    from celery_tasks.celery_app import app as celery_app
 
     result = AsyncResult(task_id, app=celery_app)
     return result.get(timeout=timeout)
@@ -83,7 +83,7 @@ def get_task_status(task_id: str) -> str:
     Returns:
         任务状态字符串 (PENDING, STARTED, RETRY, SUCCESS, FAILURE)
     """
-    from celery_tasks import celery_app
+    from celery_tasks.celery_app import app as celery_app
 
     result = AsyncResult(task_id, app=celery_app)
     return result.state
@@ -102,7 +102,7 @@ def revoke_task(task_id: str, terminate: bool = False, signal: str = 'SIGTERM') 
         >>> revoke_task("task-id-here")  # 撤销未开始的任务
         >>> revoke_task("task-id-here", terminate=True)  # 终止正在运行的任务
     """
-    from celery_tasks import celery_app
+    from celery_tasks.celery_app import app as celery_app
 
     celery_app.control.revoke(task_id, terminate=terminate, signal=signal)
 
@@ -126,7 +126,7 @@ def check_celery_connection(timeout: int = 3) -> dict:
         >>> if result["connected"]:
         ...     print(f"检测到 {result['workers_count']} 个 Worker")
     """
-    from celery_tasks import celery_app
+    from celery_tasks.celery_app import app as celery_app
 
     try:
         # 检查 Redis 连接

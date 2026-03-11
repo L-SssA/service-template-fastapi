@@ -1,25 +1,32 @@
-# Celery 异步任务使用指南
+# Celery Worker 异步任务使用指南
+
+## 概述
+
+Celery 是一个分布式任务队列，用于处理异步任务和后台作业。本指南介绍如何在项目中使用 Celery Worker 执行异步任务。
 
 ## 目录结构
 
 ```
-service-template-fastapi/
-├── celery_tasks/              # Celery 任务模块
-│   ├── __init__.py            # Celery 实例初始化和配置
-│   ├── worker.py              # Worker 启动入口
-│   ├── config.py              # Celery 配置加载
-│   └── tasks/                 # 任务定义
-│       ├── __init__.py
-│       ├── example.py         # 示例任务（加法、睡眠）
-│       └── logger_task.py     # 日志测试任务
-├── app/
-│   ├── routers/
-│   │   └── celery.py          # Celery API 路由
-│   ├── models/
-│   │   └── celery.py          # Celery 数据模型
-│   └── utils/
-│       └── celery_client.py   # Celery 客户端工具
-└── config.dev.toml            # Redis 和 Celery 配置
+celery_tasks/
+├── __init__.py        # Celery 实例初始化和配置
+├── worker.py          # Worker 启动入口
+├── config.py          # Celery 配置加载
+└── tasks/             # 异步任务定义 ⭐
+    ├── __init__.py
+    ├── example.py     # 示例任务（加法、睡眠）
+    └── logger_task.py # 日志测试任务
+```
+
+相关组件：
+
+```
+app/
+├── routers/
+│   └── celery.py          # Celery API 路由
+├── models/
+│   └── celery.py          # Celery 数据模型
+└── utils/
+    └── celery_client.py   # Celery 客户端工具
 ```
 
 ## 前置要求
@@ -58,15 +65,27 @@ brew services start redis
 
 在项目根目录下执行：
 
+**跨平台统一命令（推荐）:**
+
 ```bash
+uv run python scripts/start_celery.py worker
+```
+
+**或手动命令:**
+
+```bash
+# Windows
 celery -A celery_tasks.worker worker --loglevel=info --pool=solo
+
+# Linux/macOS
+celery -A celery_tasks.worker worker --loglevel=info
 ```
 
 **参数说明:**
 
 - `-A celery_tasks.worker`: 指定 Celery 应用位置
 - `--loglevel=info`: 日志级别
-- `--pool=solo`: Windows 兼容模式（必须）
+- `--pool=solo`: Windows 必须使用 solo 模式，Linux/macOS 可使用 prefork
 
 **成功输出示例:**
 
@@ -371,7 +390,7 @@ revoke_task(task_id, terminate=True, signal='SIGKILL')
 ### 4. 批量任务
 
 ```python
-from celery_tasks import celery_app
+from celery_tasks.celery_app import app as celery_app
 from celery import group
 
 # 使用 group 批量执行相同类型的任务
@@ -559,7 +578,7 @@ if status == "FAILURE":
 ```python
 # celery_tasks/tasks/my_task.py
 from loguru import logger
-from celery_tasks import celery_app
+from celery_tasks.celery_app import app as celery_app
 
 
 @celery_app.task(name="celery_tasks.tasks.my_task.process_data")
@@ -616,11 +635,9 @@ async def create_custom_task(request: CustomTaskRequest):
 
 同时在 `app/models/celery.py` 中添加对应的请求模型。
 
-## 下一步
+---
 
-- [ ] 实现定时任务 (Celery Beat)
-- [ ] 添加任务监控面板（如 Flower）
-- [ ] 实现任务优先级队列
-- [ ] 添加任务重试机制和死信队列
-- [ ] 集成任务执行时间统计
-- [ ] 添加任务依赖关系支持
+**相关文档**:
+
+- [Celery Beat 定时任务使用指南](CELERY_BEAT_USAGE.md) - 定时任务调度
+- [项目 README](../README.md) - 项目总体介绍
