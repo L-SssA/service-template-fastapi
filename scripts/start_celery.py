@@ -271,18 +271,18 @@ def parse_args():
         description="Celery 统一启动脚本",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
-示例:
-  python scripts/start_celery.py worker          启动 Worker (Windows 自动使用 solo 模式)
-  python scripts/start_celery.py beat            启动 Beat 调度器
-  python scripts/start_celery.py all             启动 Worker + Beat (仅 Linux/Mac)
-  python scripts/start_celery.py worker --loglevel=DEBUG  使用 DEBUG 日志级别
-  python scripts/start_celery.py all --pool=prefork      使用 prefork 进程池 (Linux/Mac)
+        示例:
+        python scripts/start_celery.py worker          启动 Worker (Windows 自动使用 solo 模式)
+        python scripts/start_celery.py beat            启动 Beat 调度器
+        python scripts/start_celery.py all             启动 Worker + Beat (仅 Linux/Mac)
+        python scripts/start_celery.py worker --loglevel=DEBUG  使用 DEBUG 日志级别
+        python scripts/start_celery.py all --pool=prefork      使用 prefork 进程池 (Linux/Mac)
 
-注意:
-  - Windows 系统必须使用 --pool=solo
-  - Windows 系统不支持 all 模式 (--beat)，请分别启动 worker 和 beat
-  - Linux/Mac 系统推荐使用 --pool=prefork
-  - 建议先启动 Redis 服务：docker run -d -p 6379:6379 redis:latest
+        注意:
+        - Windows 系统必须使用 --pool=solo
+        - Windows 系统不支持 all 模式 (--beat)，请分别启动 worker 和 beat
+        - Linux/Mac 系统推荐使用 --pool=prefork
+        - 建议先启动 Redis 服务：docker run -d -p 6379:6379 redis:latest
         """
     )
 
