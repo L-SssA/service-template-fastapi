@@ -1,7 +1,20 @@
 import os
 from app.utils import sys_utils, tools
+import argparse
 
+# 命令行参数解析
+parser = argparse.ArgumentParser(description="FastAPI 服务")
+parser.add_argument(
+    "--env",
+    type=str,
+    default="dev",
+    help="环境标识（任意标识，与环境配置文件对应）",
+)
 
+args = parser.parse_args()
+os.environ["ENV"] = args.env
+
+# 配置文件加载
 project_config_file = os.path.join(sys_utils.root_dir(), "pyproject.toml")
 
 # pyproject.toml 相关配置
@@ -23,3 +36,12 @@ listen_host = _service_cfg.get("listen_host", "0.0.0.0")
 listen_port = _service_cfg.get("listen_port", 8800)
 log_level = _service_cfg.get("log_level", "debug")
 reload_debug = _service_cfg.get("reload_debug", False)
+
+# sql 相关配置
+_sql_cfg: dict = _env_config.get("sql", {})
+sql_host = _sql_cfg.get("host", "localhost")
+sql_port = _sql_cfg.get("port", 5432)
+sql_username = _sql_cfg.get("username", "postgres")
+sql_password = _sql_cfg.get("password", "123456")
+sql_dbname = _sql_cfg.get("dbname", "mypostgres")
+sql_url = f"postgresql+asyncpg://{sql_username}:{sql_password}@{sql_host}:{sql_port}/{sql_dbname}"

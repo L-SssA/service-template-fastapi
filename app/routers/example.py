@@ -3,7 +3,7 @@ from loguru import logger
 from app.utils import http_utils
 from app.utils.decorators import exception_handler
 from app.routers.base import create_router
-from app.models.example import (
+from app.data_models.example import (
     ExampleRequest,
     ExampleResponse,
 )

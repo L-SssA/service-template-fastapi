@@ -2,11 +2,9 @@
 异步任务通用管理路由
 提供对所有异步任务的统一管理接口，包括状态查询、任务取消等
 """
-from loguru import logger
-
 from app.utils.decorators import exception_handler
 from app.routers.base import create_router
-from app.models.task import (
+from app.data_models.task import (
     TaskInfo,
     TaskInfoResponse,
     CancelTaskRequest,

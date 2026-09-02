@@ -4,6 +4,7 @@ Celery 客户端工具类
 """
 from typing import Any, List, Dict, Optional
 from celery.result import AsyncResult
+from loguru import logger
 
 
 def send_task(
@@ -179,3 +180,26 @@ def is_celery_available(timeout: int = 3) -> bool:
     """
     result = check_celery_connection(timeout)
     return result["connected"] and result["workers_count"] > 0
+
+
+def check_celery_status():
+    """
+    检查 Celery 连接状态并输出日志
+
+    Returns:
+        dict: 检查结果
+    """
+
+    result = check_celery_connection(timeout=3)
+
+    if result["connected"]:
+        if result["workers_count"] > 0:
+            logger.success(f"检测到 {result['workers_count']} 个活跃的 Celery Worker")
+        else:
+            logger.warning("未检测到活跃的 Celery Worker，异步任务可能无法执行")
+            logger.warning(f"提示：{result['error']}")
+    else:
+        logger.warning(f"Celery 连接失败：{result['error']}")
+        logger.warning("异步任务功能将不可用，请确保 Redis 和 Celery Worker 已启动")
+
+    return result

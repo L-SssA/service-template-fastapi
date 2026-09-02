@@ -3,7 +3,7 @@
 用于系统健康检查、服务状态监控等管理接口
 """
 from typing import Optional
-from app.models.base import IBaseModel, BaseResponse
+from .base import IBaseModel, BaseResponse
 
 
 # ============== Response Models ==============

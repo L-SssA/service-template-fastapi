@@ -2,13 +2,9 @@
 Celery 异步任务示例路由
 提供具体的任务创建接口（如加法、睡眠、日志测试等）
 """
-from loguru import logger
-import time
-
-from app.utils import http_utils
 from app.utils.decorators import exception_handler
 from app.routers.base import create_router
-from app.models.celery import (
+from app.data_models.celery import (
     AddTaskRequest,
     SleepTaskRequest,
     LogTaskRequest,

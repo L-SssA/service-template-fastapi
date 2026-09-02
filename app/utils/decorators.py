@@ -1,10 +1,11 @@
 import functools
-from loguru import logger
 import time
 import warnings
-from functools import wraps
 
-from app.models.exception import HttpException
+from functools import wraps
+from loguru import logger
+
+from app.data_models.exception import HttpException
 
 
 def exception_handler(operation_name: str):

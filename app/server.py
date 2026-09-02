@@ -8,6 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import config
 from app.utils import sys_utils
 from app.routers import root_router
+from app.utils.celery_client import check_celery_status
+from app.utils.db import init_db
 from app.utils.logger import init_logger
 from app.utils.server import (
     validation_exception_handler,
@@ -15,37 +17,16 @@ from app.utils.server import (
 )
 
 
-def _check_celery_status():
-    """
-    检查 Celery 连接状态并输出日志
-
-    Returns:
-        dict: 检查结果
-    """
-    from app.utils.celery_client import check_celery_connection
-
-    result = check_celery_connection(timeout=3)
-
-    if result["connected"]:
-        if result["workers_count"] > 0:
-            logger.success(f"检测到 {result['workers_count']} 个活跃的 Celery Worker")
-        else:
-            logger.warning("未检测到活跃的 Celery Worker，异步任务可能无法执行")
-            logger.warning(f"提示：{result['error']}")
-    else:
-        logger.warning(f"Celery 连接失败：{result['error']}")
-        logger.warning("异步任务功能将不可用，请确保 Redis 和 Celery Worker 已启动")
-
-    return result
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # 服务启动前执行
     init_logger()
 
+    # 数据库初始化
+    await init_db()
+
     # Celery 连接性检查
-    _check_celery_status()
+    check_celery_status()
 
     print_host = "127.0.0.1" if config.listen_host == "0.0.0.0" else config.listen_host
     docs_url = f"http://{print_host}:{config.listen_port}/docs"

@@ -2,7 +2,7 @@
 异步任务通用模型定义
 """
 from typing import Optional
-from app.models.base import IBaseModel, BaseResponse
+from .base import IBaseModel, BaseResponse
 
 
 # ============== Request Models ==============

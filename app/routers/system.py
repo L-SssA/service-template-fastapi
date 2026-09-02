@@ -2,11 +2,9 @@
 系统管理相关的路由
 提供系统健康检查、服务状态监控等管理接口
 """
-from loguru import logger
-
 from app.utils.decorators import exception_handler
 from app.routers.base import create_router
-from app.models.system import (
+from app.data_models.system import (
     CeleryStatusData,
     CeleryStatusResponse,
 )
