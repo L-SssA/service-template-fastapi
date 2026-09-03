@@ -3,13 +3,13 @@
 提供系统健康检查、服务状态监控等管理接口
 """
 from app.utils.decorators import exception_handler
-from app.routers.base import create_router
-from app.data_models.system import (
+from app.shared.routes import create_router
+from app.utils.celery_client import send_task
+
+from .schemas import (
     CeleryStatusData,
     CeleryStatusResponse,
 )
-from app.utils.celery_client import send_task
-
 
 router = create_router("system")
 

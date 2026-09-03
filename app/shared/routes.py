@@ -1,6 +1,5 @@
 from fastapi import APIRouter
 
-
 def create_router(sign):
     router = APIRouter()
     router.tags = [sign]

@@ -3,18 +3,18 @@
 提供对所有异步任务的统一管理接口，包括状态查询、任务取消等
 """
 from app.utils.decorators import exception_handler
-from app.routers.base import create_router
-from app.data_models.task import (
+from app.shared.routes import create_router
+from app.utils.celery_client import get_task_result, get_task_status, revoke_task
+
+from .schemas import (
     TaskInfo,
     TaskInfoResponse,
     CancelTaskRequest,
     CancelTaskResponse,
 )
-from app.utils.celery_client import get_task_result, get_task_status, revoke_task
 
 
 router = create_router("tasks")
-
 
 @router.get("/{task_id}", summary="获取任务信息和结果", response_model=TaskInfoResponse)
 @exception_handler("获取任务信息")

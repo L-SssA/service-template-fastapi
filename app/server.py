@@ -5,13 +5,13 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.config import config
-from app.utils import sys_utils
-from app.routers import root_router
-from app.utils.celery_client import check_celery_status
-from app.utils.db import init_db
-from app.utils.logger import init_logger
-from app.utils.server import (
+from .routers import root_router
+from .db import init_db
+from .config import config
+from .utils import sys_utils
+from .utils.celery_client import check_celery_status
+from .utils.logger import init_logger
+from .utils.server import (
     validation_exception_handler,
     http_exception_handler
 )

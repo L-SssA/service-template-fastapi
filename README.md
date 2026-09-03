@@ -20,18 +20,17 @@ service-template-fastapi/
 ├── app/                    # 应用核心代码
 │   ├── config/            # 配置管理
 │   │   └── config.py      # 主配置文件
-│   ├── models/            # 数据模型定义
-│   │   ├── base.py        # 基础模型
-│   │   ├── celery.py      # Celery 任务模型
-│   │   ├── example.py     # 示例模型
-│   │   ├── exception.py   # 异常处理模型
-│   │   └── system.py      # 系统管理模型
-│   ├── routers/           # API 路由
-│   │   ├── __init__.py    # 路由聚合
-│   │   ├── base.py        # 路由基础类
-│   │   ├── celery.py      # Celery 任务路由
-│   │   ├── example.py     # 示例路由
-│   │   └── system.py      # 系统管理路由
+│   ├── modules/           # 业务模块
+│   │   └── module_name/
+│   │       ├── __init__.py # 模块初始化
+│   │       ├── models.py  # 数据模型定义
+│   │       ├── routes.py  # 路由定义
+│   │       ├── schemas.py # 数据结构定义
+│   │       └── service.py # 业务逻辑
+│   ├── shared/            # 公共接口和数据结构
+│   │   ├── exception_schemas.py # 异常响应模型
+│   │   ├── routes.py      # 公共路由
+│   │   └── schemas.py     # 公共请求和响应模型
 │   ├── utils/             # 工具函数
 │   │   ├── celery_client.py  # Celery 客户端
 │   │   ├── decorators.py  # 装饰器
@@ -40,31 +39,33 @@ service-template-fastapi/
 │   │   ├── server.py      # 服务器工具
 │   │   ├── sys_utils.py   # 系统工具
 │   │   └── tools.py       # 通用工具
+│   ├── db.py              # 数据库相关功能
+│   ├── routers.py         # 路由聚合
 │   └── server.py          # FastAPI 应用实例
 ├── celery_tasks/          # Celery 异步任务模块
-│   ├── __init__.py        # Celery 实例初始化和配置
-│   ├── worker.py          # Worker 启动入口
-│   ├── beat.py            # Beat 调度器启动入口 ⭐
-│   ├── config.py          # Celery 配置（包含定时任务）
+│   ├── __init__.py        # Celery 模块初始化
+│   ├── celery_app.py      # Celery 实例和应用配置
+│   ├── config.py          # Celery 配置和定时任务配置
 │   ├── tasks/             # 异步任务定义
 │   │   ├── __init__.py
 │   │   ├── example.py     # 示例任务
 │   │   └── logger_task.py # 日志测试任务
 │   └── beats/             # 定时任务定义 ⭐
 │       ├── __init__.py
-│       ├── example.py     # 示例定时任务
-│       └── business.py    # 业务定时任务
+│       ├── business.py    # 业务定时任务
+│       └── example.py     # 示例定时任务
 ├── public/                # 静态资源
 │   └── index.html         # 默认首页
 ├── docs/                  # 文档目录
-│   ├── CELERY_WORKER_USAGE.md    # Celery Worker 使用指南
-│   └── CELERY_BEAT_USAGE.md      # Celery Beat 定时任务使用指南
+│   ├── BEAT_QUICKSTART.md         # Beat 快速入门
+│   ├── CELERY_BEAT_USAGE.md      # Celery Beat 使用指南
+│   └── CELERY_WORKER_USAGE.md    # Celery Worker 使用指南
 ├── scripts/               # 脚本目录
 │   └── start_celery.py    # Celery 统一启动脚本（跨平台）
 ├── config.dev.toml        # 开发环境配置
 ├── main.py                # 应用入口文件
 ├── pyproject.toml         # 项目配置和依赖
-└── uv.lock                # UV 锁定文件
+└── uv.toml                # uv 工具配置
 ```
 
 ## 快速开始
@@ -319,129 +320,10 @@ uv run python scripts/start_celery.py beat      # Beat（新终端）
 - `log_message`: 日志测试任务（支持多种日志级别）
 - `multi_level_logs`: 多级别日志批量测试任务
 
-### 测试集成
-
-运行集成测试验证 Celery 是否正常工作：
-
-```bash
-python test_celery_integration.py
-```
-
 ### 详细文档
 
 - **[Celery Worker 使用指南](docs/CELERY_WORKER_USAGE.md)** - 异步任务执行、配置和最佳实践
 - **[Celery Beat 定时任务使用指南](docs/CELERY_BEAT_USAGE.md)** - 定时任务调度和管理
-
-## 开发指南
-
-### 添加新路由
-
-1. 在 `app/routers/` 目录下创建新的路由文件
-2. 使用 `create_router()` 函数创建路由实例（自动设置 prefix 和 tags）
-3. 在 `app/routers/__init__.py` 中导入并注册到 `root_router`
-4. 路由会自动在 `app/server.py` 中被包含
-
-示例：
-
-```python
-# app/routers/my_router.py
-from app.routers.base import create_router
-
-router = create_router("my_prefix")
-
-@router.get("/endpoint")
-async def my_endpoint():
-    return {"message": "Hello"}
-```
-
-```python
-# app/routers/__init__.py
-from .my_router import router as my_router
-
-root_router.include_router(my_router)
-```
-
-### 添加数据模型
-
-1. 在 `app/models/` 目录下创建模型文件
-2. 继承 `IBaseModel`（请求模型）或 `BaseResponse`（响应模型）定义 Pydantic 模型
-3. 在路由中使用类型注解
-
-示例：
-
-```python
-# app/models/my_model.py
-from app.models.base import IBaseModel, BaseResponse
-
-class MyRequest(IBaseModel):
-    name: str
-    age: int
-
-class MyData(IBaseModel):
-    result: str
-
-class MyResponse(BaseResponse):
-    data: MyData
-```
-
-### 自定义工具函数
-
-在 `app/utils/` 目录下添加相应的工具模块，常用工具包括：
-
-- `celery_client.py`: Celery 任务客户端（发送任务、查询状态、获取结果、撤销任务）
-- `decorators.py`: 装饰器（如 `@exception_handler` 用于统一异常处理）
-- `http_utils.py`: HTTP 工具（生成统一响应格式）
-- `logger.py`: 日志配置和初始化工具
-- `server.py`: 服务器相关工具（错误处理器）
-- `sys_utils.py`: 系统工具（路径处理、文件操作）
-- `tools.py`: 通用工具（TOML 文件加载等）
-
-## 部署建议
-
-### 生产环境配置
-
-创建 `config.prod.toml`：
-
-```toml
-[service]
-listen_host = "0.0.0.0"
-listen_port = 8000
-log_level = "info"
-reload_debug = false
-```
-
-### Docker 部署
-
-``dockerfile
-FROM python:3.10-slim
-
-WORKDIR /app
-COPY . .
-RUN pip install uv && uv sync --frozen
-
-EXPOSE 8000
-CMD ["python", "main.py"]
-
-````
-
-或者使用多阶段构建（包含 Celery Worker）：
-
-```dockerfile
-FROM python:3.10-slim as base
-
-WORKDIR /app
-COPY . .
-RUN pip install uv && uv sync --frozen
-
-# FastAPI 服务
-FROM base as api
-EXPOSE 8000
-CMD ["python", "main.py"]
-
-# Celery Worker
-FROM base as worker
-CMD ["celery", "-A", "celery_tasks.worker", "worker", "--loglevel=info"]
-````
 
 ## 下一步
 

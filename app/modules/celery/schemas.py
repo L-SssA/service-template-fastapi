@@ -3,7 +3,7 @@ Celery 异步任务相关的模型定义
 注意：通用的任务管理模型（TaskInfo, CancelTaskRequest 等）已移至 app/models/task.py
 """
 from typing import Optional
-from .base import IBaseModel, BaseResponse
+from app.shared.schemas import IBaseModel, BaseResponse
 
 
 # ============== Request Models ==============

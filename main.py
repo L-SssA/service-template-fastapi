@@ -1,13 +1,13 @@
 import uvicorn
 
 from app.config import config
-from app.server import app
 
 if __name__ == "__main__":
     uvicorn.run(
-        app,
+        "app.server:app",
         host=config.listen_host,
         port=config.listen_port,
         log_level=config.log_level,
         reload=config.reload_debug,
+        reload_dirs=["app"],
     )

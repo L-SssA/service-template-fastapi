@@ -5,7 +5,7 @@ import warnings
 from functools import wraps
 from loguru import logger
 
-from app.data_models.exception import HttpException
+from app.shared.exception_schemas import HttpException
 
 
 def exception_handler(operation_name: str):

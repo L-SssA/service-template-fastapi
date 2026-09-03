@@ -2,7 +2,7 @@
 listen_host = "0.0.0.0"
 listen_port = 8800
 log_level = "debug"
-reload_debug = false
+reload_debug = true
 
 [sql]
 host = "localhost"
