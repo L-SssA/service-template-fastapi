@@ -139,35 +139,7 @@ ENV=prod python main.py
 - **Swagger UI**: http://localhost:8800/docs
 - **ReDoc**: http://localhost:8800/redoc
 
-### 接口分类说明
-
-项目采用模块化路由设计，主要接口分类如下：
-
-- **`/example/*`**: 示例接口
-- **`/celery/*`**: Celery 异步任务创建接口（加法、睡眠、日志测试等）
-- **`/tasks/*`**: 通用任务管理接口（状态查询、任务取消等）
-- **`/system/*`**: 系统管理接口（服务健康检查、组件状态监控等）
-- **定时任务**: Celery Beat 自动执行（日报、备份、清理等） ⭐
-
 ## 配置说明
-
-### 项目配置 (pyproject.toml)
-
-```toml
-[project]
-name = "service-template"
-version = "0.1.0"
-description = "一个 fastapi 的开发模板"
-requires-python = ">=3.10"
-dependencies = [
-    "fastapi>=0.123.10",
-    "loguru>=0.7.3",
-    "toml>=0.10.2",
-    "uvicorn>=0.38.0",
-    "celery>=5.3.0",
-    "redis>=5.0.0",
-]
-```
 
 ### 环境配置 (config.{env}.toml)
 
@@ -194,31 +166,6 @@ result_serializer = "json"
 accept_content = ["json"]
 timezone = "Asia/Shanghai"
 enable_utc = true
-```
-
-## API 示例
-
-### 示例接口
-
-POST `/example/` - 示例接口
-
-请求体：
-
-```json
-{
-  "id": 1,
-  "name": "test"
-}
-```
-
-响应：
-
-```json
-{
-  "code": 200,
-  "message": "操作成功",
-  "data": null
-}
 ```
 
 ## 核心特性
@@ -248,7 +195,7 @@ POST `/example/` - 示例接口
 
 自动生成交互式 API 文档，支持 Swagger UI 和 ReDoc
 
-### 🔥 定时任务 (Celery Beat) ⭐
+### 🔥 定时任务 (Celery Beat)
 
 基于 Celery Beat 的定时任务调度器，支持：
 
@@ -312,13 +259,6 @@ uv run python scripts/start_celery.py beat      # Beat（新终端）
    - 查看 `/celery/*` 端点（创建任务）
    - 查看 `/tasks/*` 端点（任务管理）
    - 或在代码中使用 `app.utils.celery_client.send_task()`
-
-### 内置任务示例
-
-- `add_task`: 简单的加法任务（测试用）
-- `sleep_task`: 延迟响应测试（可设置睡眠秒数和延迟执行）
-- `log_message`: 日志测试任务（支持多种日志级别）
-- `multi_level_logs`: 多级别日志批量测试任务
 
 ### 详细文档
 

@@ -3,7 +3,6 @@ import os
 
 from loguru import logger
 
-
 def load_toml(config_file: str):
     if not os.path.isfile(config_file):
         logger.warning(f"{config_file} not exists")

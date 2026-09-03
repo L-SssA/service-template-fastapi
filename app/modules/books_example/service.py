@@ -14,15 +14,12 @@ class BookService:
     async def get_book(self, book_uid: str, session: AsyncSession):
         statement = select(Book).where(Book.uid == book_uid)
         result = await session.execute(statement)
-        book = result.scalars().first()
-        return book if book else None
+        return result.scalar_one_or_none()
 
     async def create_book(self, data: BookCreateModel, session: AsyncSession):
         book_date_dict = data.model_dump()
-        new_book = Book(
-            **book_date_dict
-        )
 
+        new_book = Book(**book_date_dict)
         new_book.published_date = datetime.strptime(
             book_date_dict['published_date'], "%Y-%m-%d").date()
 

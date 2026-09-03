@@ -1,35 +1,26 @@
-import uuid
-
-from datetime import datetime
+from pydantic import Field
 
 from app.shared.schemas import IBaseModel, BaseResponse
 
 
-class Book(IBaseModel):
-    uid: uuid.UUID
-    title: str
-    author: str
-    publisher: str
-    published_date: str
-    page_count: int
-    language: str
-    created_at: datetime
-    updated_at: datetime
-
 class BookCreateModel(IBaseModel):
-    title: str
-    author: str
-    publisher: str
-    published_date: str
-    page_count: int
-    language: str
+    title: str = Field(..., description="标题", min_length=1, max_length=255)
+    author: str = Field(..., description="作者", min_length=1, max_length=255)
+    publisher: str = Field(
+        ..., description="出版社", min_length=1, max_length=255)
+    published_date: str = Field(
+        ..., description="出版日期", min_length=1, max_length=255)
+    page_count: int = Field(..., description="页数", gt=0)
+    language: str = Field(..., description="语言", min_length=1, max_length=255)
 
 class BookUpdateModel(IBaseModel):
-    title: str
-    author: str
-    publisher: str
-    page_count: int
-    language: str
+    title: str = Field(..., description="标题", min_length=1, max_length=255)
+    author: str = Field(..., description="作者", min_length=1, max_length=255)
+    publisher: str = Field(
+        ..., description="出版社", min_length=1, max_length=255)
+    page_count: int = Field(..., description="页数", gt=0)
+    language: str = Field(
+        ..., description="语言", min_length=1, max_length=255)
 
 class AllBooksResponse(BaseResponse):
     class Config:
