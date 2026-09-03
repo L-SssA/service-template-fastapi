@@ -1,6 +1,7 @@
 import os
-from app.utils import sys_utils, tools
 import argparse
+
+from app.utils import sys_utils, tools
 
 # 命令行参数解析
 parser = argparse.ArgumentParser(description="FastAPI 服务")
@@ -11,7 +12,7 @@ parser.add_argument(
     help="环境标识（任意标识，与环境配置文件对应）",
 )
 
-args = parser.parse_args()
+args, _unknown_args = parser.parse_known_args()
 os.environ["ENV"] = args.env
 
 # 配置文件加载
