@@ -1,4 +1,4 @@
-from datetime import timedelta, datetime
+from datetime import datetime
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,11 +11,18 @@ from app.db.redis import add_jti_to_blocklist
 
 from .schemas import UserCreateModel, UserLoginModel, UserResponse
 from .service import UserService
-from .dependencies import AccessTokenBearer, RefreshTokenBearer
+from .dependencies import (
+    AccessTokenBearer,
+    RefreshTokenBearer,
+    get_current_user_from_token,
+    RoleChecker
+)
 
 
 router = create_router("auth")
 user_service = UserService()
+role_checker = RoleChecker(["admin", 'user'])
+
 
 @router.post("/signup", summary="用户注册", response_model=UserResponse)
 @exception_handler("用户注册")
@@ -51,6 +58,7 @@ async def login_user(
             user_data = {
                 "email": user.email,
                 "user_uid": str(user.uid),
+                "role": user.role
             }
             access_token, refresh_token = create_token_pairs(user_data)
 
@@ -91,6 +99,14 @@ async def get_new_access_token(
         )
 
     return http_utils.get_response(code=400, message="refresh_token已过期或无效", data=None)
+
+@router.get("/me", summary="获取当前用户信息")
+@exception_handler("获取当前用户信息")
+async def get_current_user(
+    user=Depends(get_current_user_from_token),
+    _: bool = Depends(role_checker)
+):
+    return http_utils.get_response(code=200, message="获取成功", data=user)
 
 
 @router.get("/logout", summary="退出登录")

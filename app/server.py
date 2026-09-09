@@ -8,7 +8,6 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
 from .routers import root_router
-from .db import init_db
 from .utils import sys_utils
 from .utils.celery_client import check_celery_status
 from .utils.logger import init_logger
@@ -22,9 +21,6 @@ from .utils.server import (
 async def lifespan(app: FastAPI):
     # 服务启动前执行
     init_logger()
-
-    # 数据库初始化
-    await init_db()
 
     # Celery 连接性检查
     check_celery_status()

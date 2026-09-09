@@ -1,11 +1,13 @@
 import traceback
+
 from typing import Any
-
 from loguru import logger
+from fastapi import HTTPException
 
 
-class HttpException(Exception):
+class HttpException(HTTPException):
     def __init__(self, status_code: int, message: str = '接口处理异常', data: Any = None):
+        super().__init__(status_code=status_code, detail=message)
         self.message = message
         self.status_code = status_code
         self.data = data
