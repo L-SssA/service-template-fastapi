@@ -15,8 +15,10 @@ def validation_exception_handler(request: Request, e: RequestValidationError):
 
 
 def http_exception_handler(request: Request, e: HttpException):
+    status_code = e.status_code if hasattr(e, "status_code") else 500
+    data = e.data if hasattr(e, "data") else None
+    message = e.message if hasattr(e, "message") else "操作失败"
     return JSONResponse(
-        status_code=e.status_code,
-        content=http_utils.get_response(
-            code=e.status_code, data=e.data, message=e.message),
+        status_code=status_code,
+        content=http_utils.get_response(status_code, data, message),
     )

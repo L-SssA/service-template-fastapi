@@ -18,10 +18,10 @@ from .service import BookService
 
 router = create_router("books")
 book_service = BookService()
-access_token_bearer = Depends(AccessTokenBearer())
-role_checker = Depends(RoleChecker(["admin", 'user']))
+access_token_bearer = AccessTokenBearer()
+role_checker = RoleChecker(["admin", 'user'])
 
-@router.get("/", summary="查询所有书籍", response_model=AllBooksResponse, dependencies=[access_token_bearer, role_checker])
+@router.get("/", summary="查询所有书籍", response_model=AllBooksResponse, dependencies=[Depends(access_token_bearer), Depends(role_checker)])
 @exception_handler("查询所有书籍")
 async def get_all_books(
     session: AsyncSession = Depends(get_session),
@@ -29,17 +29,31 @@ async def get_all_books(
     books = await book_service.get_all_books(session)
     return http_utils.get_response(code=200, data=books, message="操作成功")
 
-@router.post("/", summary="创建书籍", response_model=BookResponse, dependencies=[access_token_bearer, role_checker])
+
+@router.get("/user/{user_uid}", summary="查询用户提交的书籍", response_model=AllBooksResponse, dependencies=[Depends(role_checker)])
+@exception_handler("查询用户提交的书籍")
+async def get_user_book_submissions(
+    user_uid: str,
+    session: AsyncSession = Depends(get_session),
+    token_details: dict = Depends(access_token_bearer),
+):
+    books = await book_service.get_user_books(user_uid, session)
+    return http_utils.get_response(code=200, data=books, message="操作成功")
+
+
+@router.post("/", summary="创建书籍", response_model=BookResponse, dependencies=[Depends(role_checker)])
 @exception_handler("创建书籍")
 async def create_book(
     data: BookCreateModel,
     session: AsyncSession = Depends(get_session),
+    token_details: dict = Depends(access_token_bearer),
 ):
-    new_book = await book_service.create_book(data, session)
+    user_id = token_details["user"]["user_uid"]
+    new_book = await book_service.create_book(data, user_id, session)
     return http_utils.get_response(code=201, data=new_book, message="创建成功")
 
 
-@router.get("/{book_uid}", summary="查询书籍", response_model=BookResponse, dependencies=[access_token_bearer, role_checker])
+@router.get("/{book_uid}", summary="查询书籍", response_model=BookResponse, dependencies=[Depends(access_token_bearer), Depends(role_checker)])
 @exception_handler("查询书籍")
 async def get_book(
     book_uid: str,
@@ -52,7 +66,7 @@ async def get_book(
         logger.warning(f"查询书籍失败，book_uid: {book_uid}")
         return http_utils.get_response(code=404, data=None, message="书籍不存在")
 
-@router.put("/{book_uid}", summary="更新书籍", response_model=BookResponse, dependencies=[access_token_bearer, role_checker])
+@router.put("/{book_uid}", summary="更新书籍", response_model=BookResponse, dependencies=[Depends(access_token_bearer), Depends(role_checker)])
 @exception_handler("更新书籍")
 async def update_book(
     book_uid: str,
@@ -67,7 +81,7 @@ async def update_book(
         return http_utils.get_response(code=404, data=None, message="书籍不存在")
 
 
-@router.delete("/{book_uid}", summary="删除书籍", response_model=BookResponse, dependencies=[access_token_bearer, role_checker])
+@router.delete("/{book_uid}", summary="删除书籍", response_model=BookResponse, dependencies=[Depends(access_token_bearer), Depends(role_checker)])
 @exception_handler("删除书籍")
 async def delete_book(
     book_uid: str,

@@ -2,6 +2,7 @@ from datetime import datetime
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.shared.schemas import BaseResponse
 from app.utils import http_utils
 from app.shared.routes import create_router
 from app.utils.decorators import exception_handler
@@ -9,7 +10,7 @@ from app.db import get_session
 from app.utils.auth import verify_password, create_token_pairs
 from app.db.redis import add_jti_to_blocklist
 
-from .schemas import UserCreateModel, UserLoginModel, UserResponse
+from .schemas import UserCreateModel, UserLoginModel, UserResponse, LoginResponse
 from .service import UserService
 from .dependencies import (
     AccessTokenBearer,
@@ -40,7 +41,7 @@ async def create_user_account(
         return http_utils.get_response(code=200, message="注册成功", data=new_user)
 
 
-@router.post("/login", summary="用户登录")
+@router.post("/login", summary="用户登录", response_model=LoginResponse)
 @exception_handler("用户登录")
 async def login_user(
     login_data: UserLoginModel,
@@ -75,7 +76,7 @@ async def login_user(
     return http_utils.get_response(code=400, message="邮箱或密码错误", data=None)
 
 
-@router.get("/refresh_token", summary="刷新token")
+@router.get("/refresh_token", summary="刷新token", response_model=LoginResponse)
 @exception_handler("刷新token")
 async def get_new_access_token(
     token_details: dict = Depends(RefreshTokenBearer()),
@@ -100,7 +101,7 @@ async def get_new_access_token(
 
     return http_utils.get_response(code=400, message="refresh_token已过期或无效", data=None)
 
-@router.get("/me", summary="获取当前用户信息")
+@router.get("/me", summary="获取当前用户信息", response_model=UserResponse)
 @exception_handler("获取当前用户信息")
 async def get_current_user(
     user=Depends(get_current_user_from_token),
@@ -109,7 +110,7 @@ async def get_current_user(
     return http_utils.get_response(code=200, message="获取成功", data=user)
 
 
-@router.get("/logout", summary="退出登录")
+@router.get("/logout", summary="退出登录", response_model=BaseResponse)
 @exception_handler("退出登录")
 async def revoke_token(
     token_details: dict = Depends(AccessTokenBearer()),
