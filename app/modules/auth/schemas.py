@@ -1,6 +1,6 @@
 import uuid
 
-from typing import List
+from typing import List, Optional
 from pydantic import Field
 from datetime import datetime
 
@@ -17,6 +17,8 @@ class UserModel(IBaseModel):
     is_verified: bool = Field(..., description="是否验证")
     created_at: datetime = Field(..., description="创建时间")
     updated_at: datetime = Field(..., description="更新时间")
+
+class UserBooksModel(UserModel):
     books: List[Book] = Field([], description="用户图书列表")
 
 class UserCreateModel(IBaseModel):
@@ -31,7 +33,10 @@ class UserLoginModel(IBaseModel):
     password: str = Field(..., description="密码", min_length=6)
 
 class UserResponse(BaseResponse):
-    data: UserModel = Field(..., description="用户信息")
+    data: Optional[UserModel] = Field(..., description="用户信息")
+
+class UserBooksResponse(BaseResponse):
+    data: Optional[UserBooksModel] = Field(..., description="用户信息")
 
 class LoginUserData(IBaseModel):
     email: str = Field(..., description="邮箱", max_length=40)

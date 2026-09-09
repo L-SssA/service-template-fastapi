@@ -10,7 +10,7 @@ from app.db import get_session
 from app.utils.auth import verify_password, create_token_pairs
 from app.db.redis import add_jti_to_blocklist
 
-from .schemas import UserCreateModel, UserLoginModel, UserResponse, LoginResponse
+from .schemas import UserCreateModel, UserLoginModel, UserResponse, UserBooksResponse, LoginResponse
 from .service import UserService
 from .dependencies import (
     AccessTokenBearer,
@@ -101,7 +101,7 @@ async def get_new_access_token(
 
     return http_utils.get_response(code=400, message="refresh_token已过期或无效", data=None)
 
-@router.get("/me", summary="获取当前用户信息", response_model=UserResponse)
+@router.get("/me", summary="获取当前用户信息", response_model=UserBooksResponse)
 @exception_handler("获取当前用户信息")
 async def get_current_user(
     user=Depends(get_current_user_from_token),
