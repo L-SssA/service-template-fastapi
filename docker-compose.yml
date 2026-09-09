@@ -1,21 +1,31 @@
-version: "3.8"
-
 services:
   redis:
-    image: redis
+    image: redis:8.8.2
     container_name: redis
+    restart: unless-stopped
     ports:
       - "6379:6379"
     volumes:
-      - redis_data:/data
+      - ./redis_data:/data
     command: redis-server --appendonly yes
-    restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 3
 
-volumes:
-  redis_data:
-    driver: local
+  postgres:
+    image: postgres:18
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      # version 17-
+      # - ./postgres_data:/var/lib/postgresql/data
+      # version 18+
+      - ./postgres_data:/var/lib/postgresql

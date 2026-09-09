@@ -22,3 +22,7 @@ test*.py
 # Celery Beat 调度文件
 celerybeat-schedule.*
 celerybeat-schedule.db
+
+# 持久化缓存目录
+redis_data
+postgres_data

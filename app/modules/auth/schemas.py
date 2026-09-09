@@ -10,6 +10,10 @@ class UserCreateModel(IBaseModel):
     last_name: str = Field(..., description="姓", max_length=30)
     password: str = Field(..., description="密码", min_length=6)
 
+class UserLoginModel(IBaseModel):
+    email: str = Field(..., description="邮箱", max_length=40)
+    password: str = Field(..., description="密码", min_length=6)
+
 class UserResponse(BaseResponse):
     class Config:
         json_schema_extra = {

@@ -46,3 +46,18 @@ sql_username = _sql_cfg.get("username", "postgres")
 sql_password = _sql_cfg.get("password", "123456")
 sql_dbname = _sql_cfg.get("dbname", "mypostgres")
 sql_url = f"postgresql+asyncpg://{sql_username}:{sql_password}@{sql_host}:{sql_port}/{sql_dbname}"
+
+# Redis 配置
+_redis_cfg: dict = _env_config.get("redis", {})
+redis_host = _redis_cfg.get("host", "localhost")
+redis_port = _redis_cfg.get("port", 6379)
+redis_db = _redis_cfg.get("db", 0)
+redis_password = _redis_cfg.get("password", "") or None
+redis_jti_expiry_seconds = _redis_cfg.get("jti_expiry_seconds", 3600)
+
+# 认证相关配置
+_auth_cfg: dict = _env_config.get("auth", {})
+jwt_secret_key = _auth_cfg.get("secret_key", "secret")
+jwt_algorithm = _auth_cfg.get("algorithm", "HS256")
+jwt_expiry_seconds = _auth_cfg.get("jwt_expiry_seconds", 3600)
+jwt_refresh_expiry_seconds = _auth_cfg.get("jwt_refresh_expiry_seconds", 86400)

@@ -16,6 +16,7 @@ host = "localhost"
 port = 6379
 db = 0
 password = ""
+jti_expiry_seconds = 3600
 
 [celery]
 broker_url = "redis://localhost:6379/0"
@@ -25,3 +26,9 @@ result_serializer = "json"
 accept_content = ["json"]
 timezone = "Asia/Shanghai"
 enable_utc = true
+
+[auth]
+jwt_secret = "b0eba054680ac03bca22bdeffebdc8ff"
+jwt_algorithm = "HS256"
+jwt_expiry_seconds = 3600
+jwt_refresh_expiry_seconds = 86400

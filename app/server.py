@@ -1,3 +1,5 @@
+import app.config as config
+
 from loguru import logger
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
@@ -7,7 +9,6 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .routers import root_router
 from .db import init_db
-from .config import config
 from .utils import sys_utils
 from .utils.celery_client import check_celery_status
 from .utils.logger import init_logger

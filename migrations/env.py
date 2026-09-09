@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 from sqlmodel import SQLModel
 
-from app.config.config import sql_url
+from app.config import sql_url
 from app.modules import load_models
 
 load_models()

@@ -3,7 +3,7 @@ import sys
 
 from loguru import logger
 
-from app.config import config
+import app.config as config
 from app.utils import sys_utils
 
 

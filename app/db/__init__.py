@@ -3,7 +3,7 @@ from sqlmodel import SQLModel
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 
-from app.config import config
+import app.config as config
 from app.modules import load_models
 
 
