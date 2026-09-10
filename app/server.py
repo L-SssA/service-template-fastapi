@@ -2,10 +2,13 @@ import app.config as config
 
 from loguru import logger
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, status
 from fastapi.staticfiles import StaticFiles
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+
+from app.utils import http_utils
 
 from .routers import root_router
 from .utils import sys_utils
@@ -46,6 +49,14 @@ app.include_router(root_router)
 # 全局错误拦截器
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(Exception, http_exception_handler)
+
+@app.exception_handler(status.HTTP_500_INTERNAL_SERVER_ERROR)
+async def internal_server_error(request, exc):
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content=http_utils.get_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, message="服务器内部错误"),
+    )
 
 # cors 设置
 cors_allow_origins = ["*"]
