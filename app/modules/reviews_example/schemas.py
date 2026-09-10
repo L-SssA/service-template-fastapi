@@ -20,5 +20,5 @@ class ReviewCreateModel(IBaseModel):
     review_text: str = Field(..., description="评论内容")
 
 
-class ReviewCreateResponse(BaseResponse):
+class ReviewResponse(BaseResponse):
     data: Optional[ReviewModel] = Field(..., description="评论信息")

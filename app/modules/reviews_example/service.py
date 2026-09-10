@@ -1,4 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import select
 
 from app.modules.auth.service import UserService
 from app.modules.books_example.service import BookService
@@ -30,3 +31,17 @@ class ReviewService:
         await session.commit()
 
         return new_review
+
+    async def get_review(self, review_uid: str, session: AsyncSession):
+        statement = select(Review).where(Review.uid == review_uid)
+        result = await session.execute(statement)
+        return result.scalar_one_or_none()
+
+    async def delete_review(self, review_uid: str, session: AsyncSession):
+        review_to_delete = await self.get_review(review_uid, session)
+        if not review_to_delete:
+            return None
+        else:
+            await session.delete(review_to_delete)
+            await session.commit()
+            return review_to_delete
