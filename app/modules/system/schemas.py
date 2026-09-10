@@ -18,4 +18,4 @@ class CeleryStatusData(IBaseModel):
 
 class CeleryStatusResponse(BaseResponse):
     """Celery 状态响应"""
-    data: CeleryStatusData = Field(..., description="Celery 状态数据")
+    data: Optional[CeleryStatusData] = Field(..., description="Celery 状态数据")

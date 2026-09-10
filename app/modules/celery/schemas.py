@@ -44,4 +44,4 @@ class TaskData(IBaseModel):
 
 class TaskResponse(BaseResponse):
     """任务响应"""
-    data: TaskData = Field(..., description="任务数据")
+    data: Optional[TaskData] = Field(..., description="任务数据")

@@ -1,11 +1,13 @@
 import uuid
 import sqlalchemy.dialects.postgresql as pg
 
-from typing import List
+from typing import TYPE_CHECKING, List
 from sqlmodel import Relationship, SQLModel, Field, Column
 from datetime import datetime
 
-from app.modules.books_example import models
+if TYPE_CHECKING:
+    from app.modules.books_example.models import Book
+    from app.modules.reviews_example.models import Review
 
 class User(SQLModel, table=True):
     __tablename__ = "users"
@@ -35,7 +37,10 @@ class User(SQLModel, table=True):
         pg.TIMESTAMP, default=datetime.now))
     updated_at: datetime = Field(sa_column=Column(
         pg.TIMESTAMP, default=datetime.now))
-    books: List["models.Book"] = Relationship(
+
+    books: List["Book"] = Relationship(
+        back_populates="user", sa_relationship_kwargs={"lazy": "selectin"})
+    reviews: List["Review"] = Relationship(
         back_populates="user", sa_relationship_kwargs={"lazy": "selectin"})
 
     def __repr__(self):

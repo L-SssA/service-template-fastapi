@@ -12,7 +12,8 @@ from .schemas import (
     BookCreateModel,
     BookUpdateModel,
     AllBooksResponse,
-    BookResponse
+    BookResponse,
+    BookDetailResponse
 )
 from .service import BookService
 
@@ -53,7 +54,7 @@ async def create_book(
     return http_utils.get_response(code=201, data=new_book, message="创建成功")
 
 
-@router.get("/{book_uid}", summary="查询书籍", response_model=BookResponse, dependencies=[Depends(access_token_bearer), Depends(role_checker)])
+@router.get("/{book_uid}", summary="查询书籍", response_model=BookDetailResponse, dependencies=[Depends(access_token_bearer), Depends(role_checker)])
 @exception_handler("查询书籍")
 async def get_book(
     book_uid: str,

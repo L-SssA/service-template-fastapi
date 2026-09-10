@@ -5,7 +5,8 @@ from pydantic import Field
 from datetime import datetime
 
 from app.shared.schemas import IBaseModel, BaseResponse
-from app.modules.books_example.schemas import Book
+from app.modules.books_example.schemas import BookModel
+from app.modules.reviews_example.schemas import ReviewModel
 
 
 class UserModel(IBaseModel):
@@ -19,7 +20,8 @@ class UserModel(IBaseModel):
     updated_at: datetime = Field(..., description="更新时间")
 
 class UserBooksModel(UserModel):
-    books: List[Book] = Field([], description="用户图书列表")
+    books: List[BookModel] = Field([], description="用户图书列表")
+    reviews: List[ReviewModel] = Field([], description="用户评论列表")
 
 class UserCreateModel(IBaseModel):
     username: str = Field(..., description="用户名", max_length=16)
@@ -49,4 +51,4 @@ class LoginDataModel(IBaseModel):
     user: LoginUserData = Field(..., description="用户信息")
 
 class LoginResponse(BaseResponse):
-    data: LoginDataModel = Field(..., description="用户信息")
+    data: Optional[LoginDataModel] = Field(..., description="用户信息")

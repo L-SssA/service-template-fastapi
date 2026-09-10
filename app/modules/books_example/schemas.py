@@ -1,12 +1,13 @@
 import uuid
 
-from typing import List
+from typing import List, Optional
 from pydantic import Field
 from datetime import datetime
 
 from app.shared.schemas import IBaseModel, BaseResponse
+from app.modules.reviews_example.schemas import ReviewModel
 
-class Book(IBaseModel):
+class BookModel(IBaseModel):
     uid: uuid.UUID = Field(..., description="书籍ID")
     title: str = Field(..., description="标题")
     author: str = Field(..., description="作者")
@@ -17,6 +18,8 @@ class Book(IBaseModel):
     created_at: datetime = Field(..., description="创建时间")
     updated_at: datetime = Field(..., description="更新时间")
 
+class BookDetailModel(BookModel):
+    reviews: List[ReviewModel] = Field(..., description="评论列表")
 
 class BookCreateModel(IBaseModel):
     title: str = Field(..., description="标题", min_length=1, max_length=255)
@@ -38,7 +41,11 @@ class BookUpdateModel(IBaseModel):
         ..., description="语言", min_length=1, max_length=255)
 
 class AllBooksResponse(BaseResponse):
-    data: List[Book] = Field(..., description="书籍列表")
+    data: Optional[List[BookModel]] = Field(..., description="书籍列表")
 
 class BookResponse(BaseResponse):
-    data: Book = Field(..., description="书籍")
+    data: Optional[BookModel] = Field(..., description="书籍")
+
+
+class BookDetailResponse(BaseResponse):
+    data: Optional[BookDetailModel] = Field(..., description="书籍")

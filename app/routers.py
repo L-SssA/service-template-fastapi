@@ -1,14 +1,21 @@
+from importlib import import_module
+from pathlib import Path
 from fastapi import APIRouter
-from .modules.books_example.routes import router as book_router
-from .modules.celery.routes import router as celery_router
-from .modules.system.routes import router as system_router
-from .modules.tasks.routes import router as tasks_router
-from .modules.auth.routes import router as auth_router
-
 
 root_router = APIRouter()
-root_router.include_router(book_router)
-root_router.include_router(celery_router)
-root_router.include_router(system_router)
-root_router.include_router(tasks_router)
-root_router.include_router(auth_router)
+
+modules_dir = Path(__file__).resolve().parent / "modules"
+
+for module_dir in modules_dir.iterdir():
+    if not module_dir.is_dir() or module_dir.name.startswith("__"):
+        continue
+
+    routes_file = module_dir / "routes.py"
+    if not routes_file.exists():
+        continue
+
+    module_name = f"app.modules.{module_dir.name}.routes"
+    route_module = import_module(module_name)
+    router = getattr(route_module, "router", None)
+    if router is not None:
+        root_router.include_router(router)
