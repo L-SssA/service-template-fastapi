@@ -2,10 +2,9 @@ import traceback
 
 from typing import Any
 from loguru import logger
-from fastapi import HTTPException
 
 
-class HttpException(HTTPException):
+class HttpException(Exception):
     def __init__(self, status_code: int, message: str = '接口处理异常', data: Any = None):
         super().__init__(status_code=status_code, detail=message)
         self.message = message
@@ -19,3 +18,19 @@ class HttpException(HTTPException):
             msg = f'HttpException: {status_code}, {message}\n{tb_str}'
 
         logger.error(msg)
+
+class InvalidTokenException(HttpException):
+    def __init__(self):
+        super().__init__(status_code=403, message="Token不存在或已过期，请重新登陆。")
+
+class AccessTokenRequiredException(HttpException):
+    def __init__(self):
+        super().__init__(status_code=403, message="请使用Access_Token访问")
+
+class RefreshTokenRequiredException(HttpException):
+    def __init__(self):
+        super().__init__(status_code=403, message="请使用Refresh_Token访问")
+
+class PermissionNotAllowedException(HttpException):
+    def __init__(self):
+        super().__init__(status_code=403, message="您没有权限执行此操作")
