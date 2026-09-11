@@ -57,7 +57,7 @@ redis_jti_expiry_seconds = _redis_cfg.get("jti_expiry_seconds", 3600)
 
 # 认证相关配置
 _auth_cfg: dict = _env_config.get("auth", {})
-jwt_secret_key = _auth_cfg.get("secret_key", "secret")
-jwt_algorithm = _auth_cfg.get("algorithm", "HS256")
+jwt_secret_key = _auth_cfg.get("jwt_secret", "secret")
+jwt_algorithm = _auth_cfg.get("jwt_algorithm", "HS256")
 jwt_expiry_seconds = _auth_cfg.get("jwt_expiry_seconds", 3600)
 jwt_refresh_expiry_seconds = _auth_cfg.get("jwt_refresh_expiry_seconds", 86400)

@@ -9,7 +9,7 @@ from app.modules import load_models
 
 async_engine: AsyncEngine = create_async_engine(
     config.sql_url,
-    echo=True if config.log_level == "debug" else False,
+    echo=config.log_level == "debug",
 )
 
 async def init_db():
@@ -22,7 +22,7 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
     Session = sessionmaker(
         bind=async_engine,
         class_=AsyncSession,
-        expire_on_commit=False
+        expire_on_commit=False,
     )
     async with Session() as session:
         yield session

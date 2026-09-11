@@ -33,7 +33,7 @@ app: FastAPI = FastAPI(
     title=config.project_name,
     description=config.project_description,
     version=config.project_version,
-    debug=False,
+    debug=config.log_level == "debug",
     lifespan=lifespan
 )
 
