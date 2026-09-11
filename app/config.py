@@ -77,4 +77,4 @@ mail_server = _mail_cfg.get("mail_server", "")
 mail_port = _mail_cfg.get("mail_port", 465)
 mail_from = _mail_cfg.get(
     "mail_from", "") or env_settings.MAIL_FROM
-mail_from_name = _mail_cfg.get("from_name", "")
+mail_from_name = _mail_cfg.get("mail_from_name", "")
