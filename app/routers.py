@@ -1,6 +1,6 @@
 from importlib import import_module
 from pathlib import Path
-from fastapi import APIRouter
+from fastapi import APIRouter, FastAPI
 
 root_router = APIRouter()
 
@@ -19,3 +19,6 @@ for module_dir in modules_dir.iterdir():
     router = getattr(route_module, "router", None)
     if router is not None:
         root_router.include_router(router)
+
+def register_routers(app: FastAPI):
+    app.include_router(root_router)

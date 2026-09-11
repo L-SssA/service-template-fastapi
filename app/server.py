@@ -2,22 +2,16 @@ import app.config as config
 
 from loguru import logger
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, status
+from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from fastapi.exceptions import RequestValidationError
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 
-from app.utils import http_utils
 
-from .routers import root_router
 from .utils import sys_utils
 from .utils.celery_client import check_celery_status
 from .utils.logger import init_logger
-from .utils.server import (
-    validation_exception_handler,
-    http_exception_handler
-)
+from .routers import register_routers
+from .exceptions import register_exception_handlers
+from .middlewares import register_middleware
 
 
 @asynccontextmanager
@@ -44,30 +38,14 @@ app: FastAPI = FastAPI(
 )
 
 # 注册路由
-app.include_router(root_router)
+register_routers(app)
 
 # 全局错误拦截器
-app.add_exception_handler(RequestValidationError, validation_exception_handler)
-app.add_exception_handler(Exception, http_exception_handler)
+register_exception_handlers(app)
 
-@app.exception_handler(status.HTTP_500_INTERNAL_SERVER_ERROR)
-async def internal_server_error(request, exc):
-    return JSONResponse(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content=http_utils.get_response(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, message="服务器内部错误"),
-    )
+# 中间件
+register_middleware(app)
 
-# cors 设置
-cors_allow_origins = ["*"]
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=cors_allow_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# 挂载路由
+# 挂载静态文件夹
 public_path = sys_utils.root_dir("public")
 app.mount("/", StaticFiles(directory=public_path, html=True), name="public")

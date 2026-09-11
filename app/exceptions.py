@@ -1,4 +1,4 @@
-from fastapi import Request
+from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
@@ -22,3 +22,18 @@ def http_exception_handler(request: Request, e: HttpException):
         status_code=status_code,
         content=http_utils.get_response(status_code, data, message),
     )
+
+def register_exception_handlers(app: FastAPI):
+    app.add_exception_handler(
+        RequestValidationError,
+        validation_exception_handler
+    )
+    app.add_exception_handler(HttpException, http_exception_handler)
+
+    @app.exception_handler(status.HTTP_500_INTERNAL_SERVER_ERROR)
+    async def internal_server_error(request, exc):
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content=http_utils.get_response(
+                code=status.HTTP_500_INTERNAL_SERVER_ERROR, message="服务器内部错误"),
+        )
