@@ -7,15 +7,14 @@ reload_debug = true
 [sql]
 host = "localhost"
 port = 5432
-username = "postgres"
-password = "123456"
+username = ""
+password = ""
 dbname = "mypostgres"
 
 [redis]
 host = "localhost"
 port = 6379
 db = 0
-password = ""
 jti_expiry_seconds = 3600
 
 [celery]
@@ -28,7 +27,7 @@ timezone = "Asia/Shanghai"
 enable_utc = true
 
 [auth]
-jwt_secret = "b0eba054680ac03bca22bdeffebdc8ff"
+jwt_secret = ""
 jwt_algorithm = "HS256"
 jwt_expiry_seconds = 3600
 jwt_refresh_expiry_seconds = 86400
