@@ -1,23 +1,31 @@
 
-import os
+from pathlib import Path
+
 from loguru import logger
 
-def safe_create_dir(path):
-    """安全创建目录"""
+
+def safe_create_dir(path: str | Path) -> Path:
+    """安全创建目录并返回标准化的 pathlib.Path 对象。"""
+    directory = Path(path)
     try:
-        if not os.path.exists(path):
-            os.makedirs(path)
+        if not directory.exists():
+            directory.mkdir(parents=True, exist_ok=True)
     except Exception as e:
         logger.error(f"safe_create_dir error: {e}")
+    return directory
 
 
-def _root_dir():
-    """获取项目根目录"""
-    return os.path.realpath(os.path.join(os.path.realpath(__file__), "../../../"))
+def _root_dir() -> Path:
+    """获取项目根目录。"""
+    return Path(__file__).resolve().parents[2]
 
 
-def root_dir(dir_path: str = ""):
-    d = os.path.join(_root_dir(), dir_path)
-    if not os.path.exists(d):
-        safe_create_dir(d)
-    return d
+def root_dir(dir_path: str | Path = "") -> Path:
+    """基于项目根目录返回指定目录路径，若目录不存在则创建。"""
+    directory = _root_dir() / Path(dir_path)
+    if not directory.exists():
+        safe_create_dir(directory)
+    return directory
+
+def app_dir() -> Path:
+    return root_dir() / "app"

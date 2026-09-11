@@ -1,5 +1,5 @@
-import os
 import sys
+from pathlib import Path
 
 from loguru import logger
 
@@ -13,11 +13,14 @@ def init_logger():
 
     def format_record(record):
         # 获取日志记录中的文件全路径
-        file_path = record["file"].path
+        file_path = Path(record["file"].path)
         # 将绝对路径转换为相对于项目根目录的路径
-        relative_path = os.path.relpath(file_path, root_dir)
+        try:
+            relative_path = file_path.relative_to(root_dir)
+        except ValueError:
+            relative_path = file_path
         # 更新记录中的文件路径
-        record["file"].path = f"./{relative_path}"
+        record["file"].path = f"./{relative_path.as_posix()}"
         # 返回修改后的格式字符串
         # 您可以根据需要调整这里的格式
         _format = (
