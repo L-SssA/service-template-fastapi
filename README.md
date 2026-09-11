@@ -18,50 +18,28 @@
 ```
 service-template-fastapi/
 ├── app/                    # 应用核心代码
-│   ├── config/            # 配置管理
-│   │   └── config.py      # 主配置文件
+│   ├── config.py          # 全局配置与环境变量读取
+│   ├── routers.py         # 自动扫描 app/modules 中的 route 模块并装配 root_router
+│   ├── server.py          # FastAPI 应用实例与全局异常处理
+│   ├── db/                # 数据库与 Redis 连接能力
 │   ├── modules/           # 业务模块
 │   │   └── module_name/
-│   │       ├── __init__.py # 模块初始化
-│   │       ├── models.py  # 数据模型定义
+│   │       ├── __init__.py
 │   │       ├── routes.py  # 路由定义
 │   │       ├── schemas.py # 数据结构定义
-│   │       └── service.py # 业务逻辑
-│   ├── shared/            # 公共接口和数据结构
-│   │   ├── exception_schemas.py # 异常响应模型
-│   │   ├── routes.py      # 公共路由
-│   │   └── schemas.py     # 公共请求和响应模型
-│   ├── utils/             # 工具函数
-│   │   ├── celery_client.py  # Celery 客户端
-│   │   ├── decorators.py  # 装饰器
-│   │   ├── http_utils.py  # HTTP 工具
-│   │   ├── logger.py      # 日志配置
-│   │   ├── server.py      # 服务器工具
-│   │   ├── sys_utils.py   # 系统工具
-│   │   └── tools.py       # 通用工具
-│   ├── db.py              # 数据库相关功能
-│   ├── routers.py         # 路由聚合
-│   └── server.py          # FastAPI 应用实例
+│   │       ├── service.py # 业务逻辑
+│   │       └── dependencies.py  # 认证/角色依赖（按需存在）
+│   ├── shared/            # 公共接口、基类、路由工厂
+│   └── utils/             # 工具函数
 ├── celery_tasks/          # Celery 异步任务模块
-│   ├── __init__.py        # Celery 模块初始化
-│   ├── celery_app.py      # Celery 实例和应用配置
-│   ├── config.py          # Celery 配置和定时任务配置
-│   ├── tasks/             # 异步任务定义
-│   │   ├── __init__.py
-│   │   ├── example.py     # 示例任务
-│   │   └── logger_task.py # 日志测试任务
-│   └── beats/             # 定时任务定义 ⭐
-│       ├── __init__.py
-│       ├── business.py    # 业务定时任务
-│       └── example.py     # 示例定时任务
+│   ├── __init__.py
+│   ├── celery_app.py
+│   ├── config.py
+│   ├── tasks/             # 任务定义
+│   └── beats/             # 定时任务定义
 ├── public/                # 静态资源
-│   └── index.html         # 默认首页
 ├── docs/                  # 文档目录
-│   ├── BEAT_QUICKSTART.md         # Beat 快速入门
-│   ├── CELERY_BEAT_USAGE.md      # Celery Beat 使用指南
-│   └── CELERY_WORKER_USAGE.md    # Celery Worker 使用指南
 ├── scripts/               # 脚本目录
-│   └── start_celery.py    # Celery 统一启动脚本（跨平台）
 ├── config.dev.toml        # 开发环境配置
 ├── main.py                # 应用入口文件
 ├── pyproject.toml         # 项目配置和依赖
@@ -89,16 +67,16 @@ docker run -d -p 6379:6379 redis:latest
 
 ### 安装依赖
 
-使用 pip 安装：
-
-```bash
-pip install -r requirements.txt
-```
-
-或使用 uv（推荐）：
+优先使用 uv（推荐）：
 
 ```bash
 uv sync
+```
+
+如果你希望用传统 pip 方式安装，也可以基于项目 `pyproject.toml` 手动构建环境：
+
+```bash
+pip install -e .
 ```
 
 ### 运行项目
@@ -110,17 +88,17 @@ uv sync
 uv run python scripts/start_celery.py worker
 
 # 或者使用原生命令（不推荐）
-celery -A celery_tasks.worker worker --loglevel=info --pool=solo
+uv run celery -A celery_tasks worker --loglevel=info --pool=solo
 ```
 
 **步骤 2: 启动 FastAPI 应用**
 
 ```bash
-# 设置环境变量并运行
-ENV=dev python main.py
+# 显式指定环境
+uv run python main.py --env dev
 
-# 或直接运行（默认 dev 环境）
-python main.py
+# 或者直接运行（默认 dev 环境）
+uv run python main.py
 ```
 
 如果 Worker 已启动，应用会显示：`检测到 X 个活跃的 Celery Worker`
@@ -128,8 +106,7 @@ python main.py
 #### 生产模式
 
 ```bash
-# 设置生产环境
-ENV=prod python main.py
+uv run python main.py --env prod
 ```
 
 ### 访问接口文档

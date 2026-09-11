@@ -6,27 +6,45 @@
 
 ### 1.1 目录结构规范
 
-项目采用模块化设计，代码应按照以下目录结构组织：
+项目采用模块化设计，当前仓库的实际目录结构如下：
 
 ```
 service-template-fastapi/
 ├── app/                    # 应用核心代码
-│   ├── config/            # 配置管理
-│   ├── models/            # 数据模型定义 ⭐
-│   ├── routers/           # API 路由 ⭐
-│   ├── utils/             # 工具函数
-│   └── server.py          # FastAPI 应用实例
-├── celery_tasks/          # Celery 异步任务模块 ⭐
-├── docs/                  # 文档目录 ⭐
+│   ├── config.py          # 全局配置与环境变量读取
+│   ├── routers.py         # 自动扫描 app/modules 中的 route 模块并装配 root_router
+│   ├── server.py          # FastAPI 应用实例与全局异常处理
+│   ├── db/                # 数据库与 Redis 连接能力
+│   ├── modules/           # 业务模块
+│   │   └── module_name/
+│   │       ├── __init__.py
+│   │       ├── routes.py  # 路由定义
+│   │       ├── schemas.py # 数据结构定义
+│   │       ├── service.py # 业务逻辑
+│   │       └── dependencies.py  # 认证/角色依赖（按需存在）
+│   ├── shared/            # 公共接口、基类、路由工厂
+│   └── utils/             # 工具函数
+├── celery_tasks/          # Celery 异步任务模块
+│   ├── __init__.py
+│   ├── celery_app.py
+│   ├── config.py
+│   ├── tasks/             # 任务定义
+│   └── beats/             # 定时任务定义
 ├── public/                # 静态资源
+├── docs/                  # 文档目录
 ├── scripts/               # 脚本目录
-└── 配置文件
+├── config.dev.toml        # 开发环境配置
+├── main.py                # 应用入口文件
+├── pyproject.toml         # 项目配置和依赖
+└── uv.toml                # uv 工具配置
 ```
 
 ### 1.2 关键目录说明
 
-- **`app/models/`**: 存放所有数据模型定义
-- **`app/routers/`**: 存放所有 API 路由，按模块分文件编写
+- **`app/modules/`**: 存放所有业务模块，每个模块独立管理自己的路由、模型、服务和数据结构
+- **`app/shared/`**: 存放跨模块共享的接口和数据结构
+- **`app/utils/`**: 存放通用工具函数
+- **`app/config/`**: 存放配置管理相关代码
 - **`celery_tasks/`**: 存放所有异步任务定义
 - **`docs/`**: 存放所有项目文档（除 README.md 外）
 
@@ -36,8 +54,6 @@ service-template-fastapi/
 
 ### 2.1 模型分类
 
-所有数据模型必须放在 `app/models/` 目录下，并遵循以下继承规则：
-
 #### Request 模型（请求体）
 
 - **必须继承自 `IBaseModel`**
@@ -45,8 +61,8 @@ service-template-fastapi/
 - 支持自动字符串截断和格式化输出
 
 ```python
-# app/models/example.py
-from app.models.base import IBaseModel
+# app/modules/example/schemas.py
+from app.shared.schemas import IBaseModel
 
 class UserRequest(IBaseModel):
     """用户请求模型"""
@@ -62,9 +78,9 @@ class UserRequest(IBaseModel):
 - 自动包含 `code`, `data`, `message` 字段
 
 ```python
-# app/models/example.py
+# app/modules/example/schemas.py
 from typing import Any, Optional
-from app.models.base import BaseResponse
+from app.shared.schemas import BaseResponse, IBaseModel
 
 class UserData(IBaseModel):
     """用户数据模型"""
@@ -74,18 +90,18 @@ class UserData(IBaseModel):
 
 class UserResponse(BaseResponse):
     """用户响应模型"""
-    data: UserData | None = None
+    data: Optional[UserData] = None
 ```
 
 ### 2.2 基类说明
 
-**IBaseModel** (`app/models/base.py`)
+**IBaseModel** (`app/shared/schemas.py`)
 
 - 继承自 `pydantic.BaseModel`
 - 提供 `__trim_string__()` 方法：自动截断过长的字符串（最大 200 字符）
 - 重写 `__repr_args__()` 方法：优化调试输出
 
-**BaseResponse** (`app/models/base.py`)
+**BaseResponse** (`app/shared/schemas.py`)
 
 - 继承自 `IBaseModel`
 - 标准响应格式：
@@ -109,22 +125,22 @@ class UserResponse(BaseResponse):
 
 ### 3.1 模块化路由
 
-**原则**: 除非特殊情况，routers 应该分模块编写
+**原则**: 除非特殊情况，业务路由应以模块目录的形式位于 `app/modules/<module_name>/routes.py`，并由顶层 `app/routers.py` 自动扫描注册。
 
 #### 步骤 1: 创建路由文件
 
-在 `app/routers/` 目录下创建新的路由文件，以模块名命名：
+在 `app/modules/<module_name>/routes.py` 中创建新的路由文件，以模块名命名：
 
 ```python
-# app/routers/user.py
-from fastapi import APIRouter
-from app.routers.base import create_router
+# app/modules/user/routes.py
+from fastapi import Depends
+from app.shared.routes import create_router
+from app.db import get_session
 
-# 使用 create_router 创建路由实例
 router = create_router("user")
 
 @router.get("/{user_id}")
-async def get_user(user_id: int):
+async def get_user(user_id: int, session: AsyncSession = Depends(get_session)):
     """获取用户信息"""
     return {"user_id": user_id}
 
@@ -136,32 +152,32 @@ async def create_user(username: str):
 
 #### 步骤 2: 注册路由
 
-在 `app/routers/__init__.py` 中导入并注册到 `root_router`:
+本项目会在 `app/routers.py` 中自动扫描 `app/modules` 下每个目录中的 `routes.py`，并将找到的路由聚合到根路由器：
 
 ```python
-# app/routers/__init__.py
-from fastapi import APIRouter
-from . import example, celery
-
-# 创建根路由器
-root_router = APIRouter()
-
-# 注册各个模块的路由
-root_router.include_router(example.router)
-root_router.include_router(celery.router)
-root_router.include_router(user.router)  # 新增 user 路由
+# app/routers.py
+modules_dir = Path(__file__).resolve().parent / "modules"
+for module_dir in modules_dir.iterdir():
+    routes_file = module_dir / "routes.py"
+    if not routes_file.exists():
+        continue
+    module_name = f"app.modules.{module_dir.name}.routes"
+    route_module = import_module(module_name)
+    router = getattr(route_module, "router", None)
+    if router is not None:
+        root_router.include_router(router)
 ```
 
 ### 3.2 create_router 函数
 
-`create_router()` 函数位于 `app/routers/base.py`，作用：
+`create_router()` 函数位于 `app/shared/routes.py`，作用：
 
 - 自动设置 `prefix` 为 `/{sign}`
 - 自动设置 `tags` 为 `[sign]`
 - 保持 API 文档的结构清晰
 
 ```python
-# app/routers/base.py
+# app/shared/routes.py
 def create_router(sign):
     router = APIRouter()
     router.tags = [sign]
@@ -171,7 +187,7 @@ def create_router(sign):
 
 ### 3.3 路由文件结构
 
-每个路由文件应包含：
+每个模块路由文件应包含：
 
 1. 必要的导入语句
 2. 使用 `create_router()` 创建路由实例
@@ -225,7 +241,7 @@ def add_task(self, a, b):
 在 FastAPI 路由中调用异步任务：
 
 ```python
-# app/routers/celery.py
+# app/modules/celery/routes.py
 from app.utils.celery_client import send_task
 
 @router.post("/task/add")
@@ -247,7 +263,7 @@ async def run_add_task(a: int, b: int):
 - 任务名称应清晰表达功能
 - 复杂任务应包含进度跟踪和错误处理
 - 使用 `bind=True` 可以访问任务实例（用于更新状态、记录日志等）
-- 参考 [`docs/CELERY_USAGE.md`](docs/CELERY_USAGE.md) 获取详细使用指南
+- 参考 [`docs/CELERY_WORKER_USAGE.md`](docs/CELERY_WORKER_USAGE.md) 与 [`docs/CELERY_BEAT_USAGE.md`](docs/CELERY_BEAT_USAGE.md) 获取详细使用指南
 
 ---
 
@@ -262,7 +278,7 @@ async def run_add_task(a: int, b: int):
 
 `docs/` 目录应包含：
 
-- 功能模块详细说明（如 `CELERY_USAGE.md`）
+- 功能模块详细说明（如 `CELERY_WORKER_USAGE.md`、`CELERY_BEAT_USAGE.md`）
 - API 接口文档（如果超出 README 范围）
 - 部署指南
 - 开发规范
@@ -311,7 +327,7 @@ async def run_add_task(a: int, b: int):
 1. **添加新功能模块**
 
    - ✅ 更新 `README.md` 的项目结构和 API 列表
-   - ✅ 如功能复杂，在 `docs/` 中创建对应的技术文档（如 `CELERY_USAGE.md`）
+   - ✅ 如功能复杂，在 `docs/` 中创建对应的技术文档（如 `CELERY_WORKER_USAGE.md`）
    - ✅ 确保 Swagger 文档与代码一致
    - ❌ **不要**创建临时的"新增功能说明"或"变更日志"类文档
    - ❌ **严禁**创建实现总结、交付清单、快速参考卡片等任何形式的临时文档
@@ -524,11 +540,11 @@ source .venv/bin/activate  # Linux/Mac
 
 ### 新建功能模块流程
 
-1. **创建模型** → `app/models/my_feature.py`
-2. **创建路由** → `app/routers/my_feature.py`（使用 `create_router("my_feature")`）
-3. **注册路由** → 编辑 `app/routers/__init__.py`
+1. **创建模块目录** → `app/modules/my_feature/`
+2. **创建路由与结构定义** → `app/modules/my_feature/routes.py`（使用 `create_router("my_feature")`），并按需补充 `schemas.py`、`service.py`、`dependencies.py`、`models.py`
+3. **自动注册路由** → 由顶层 `app/routers.py` 自动扫描 `app/modules/*/routes.py` 并装配根路由，不需要额外手工注册文件
 4. **创建任务**（可选）→ `celery_tasks/tasks/my_feature.py`
-5. **更新文档** → 更新 `README.md` 和/或创建 `docs/MY_FEATURE.md`
+5. **更新文档** → 更新 `README.md` 和相关 `docs/` 说明，避免临时文档
 
 ### 代码移动操作流程
 
@@ -551,10 +567,10 @@ source .venv/bin/activate  # Linux/Mac
 
 ```python
 # 模型基类
-from app.models.base import IBaseModel, BaseResponse
+from app.shared.schemas import IBaseModel, BaseResponse
 
 # 路由创建
-from app.routers.base import create_router
+from app.shared.routes import create_router
 
 # Celery 任务
 from celery_tasks.celery_app import app as celery_app
