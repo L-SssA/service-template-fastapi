@@ -24,17 +24,19 @@ service-template-fastapi/
 │   │       └── dependencies.py  # 认证/角色依赖（按需存在）
 │   ├── shared/            # 公共接口、基类、路由工厂
 │   └── utils/             # 工具函数
-├── celery_tasks/          # Celery 异步任务模块
-│   ├── __init__.py
-│   ├── celery_app.py
-│   ├── config.py
-│   ├── tasks/             # 任务定义
-│   └── beats/             # 定时任务定义
+├── celery_app/            # Celery 应用包
+│   ├── config.py          # Celery 配置与 Beat schedule
+│   ├── server.py          # Celery 实例创建与自动加载任务
+│   └── tasks/             # 任务定义
+│       ├── __init__.py
+│       ├── example.py
+│       └── example_beats.py
+├── migrations/            # Alembic 数据库迁移目录
 ├── public/                # 静态资源
 ├── docs/                  # 文档目录
 ├── scripts/               # 脚本目录
 ├── config.dev.toml        # 开发环境配置
-├── main.py                # 应用入口文件
+├── main.py                # 应用入口文件（启动 FastAPI 与 Celery）
 ├── pyproject.toml         # 项目配置和依赖
 └── uv.toml                # uv 工具配置
 ```
@@ -45,7 +47,7 @@ service-template-fastapi/
 - **`app/shared/`**: 存放跨模块共享的接口和数据结构
 - **`app/utils/`**: 存放通用工具函数
 - **`app/config/`**: 存放配置管理相关代码
-- **`celery_tasks/`**: 存放所有异步任务定义
+- **`celery_app/`**: 存放 Celery 应用实例、配置与自动加载的任务包
 - **`docs/`**: 存放所有项目文档（除 README.md 外）
 
 ---
@@ -200,28 +202,27 @@ def create_router(sign):
 
 ### 4.1 任务定义位置
 
-**所有异步任务必须定义在 `celery_tasks/` 目录中**
+**所有异步任务必须定义在 `celery_app/tasks/` 目录中**，并由 `celery_app/server.py` 中的 `load_tasks()` 自动发现。
 
 ```
-celery_tasks/
-├── __init__.py        # Celery 实例初始化
-├── worker.py          # Worker 启动入口
-├── config.py          # Celery 配置
+celery_app/
+├── config.py          # Celery 配置与 Beat schedule
+├── server.py          # Celery 实例创建与自动加载任务
 └── tasks/             # 任务定义 ⭐
     ├── __init__.py
     ├── example.py     # 示例任务
-    └── logger_task.py # 日志测试任务
+    └── example_beats.py  # Beat 示例任务
 ```
 
 ### 4.2 任务编写规范
 
 ```python
-# celery_tasks/tasks/example.py
-from celery_tasks.celery_app import app as celery_app
+# celery_app/tasks/example.py
+from celery import shared_task
 from loguru import logger
 
-@celery_app.task(bind=True)
-def add_task(self, a, b):
+@shared_task(name="celery_app.tasks.example.add_task")
+def add_task(a: int, b: int) -> int:
     """
     简单的加法任务
 
@@ -248,7 +249,7 @@ from app.utils.celery_client import send_task
 async def run_add_task(a: int, b: int):
     """执行异步加法任务"""
     task_result = send_task(
-        task_name="celery_tasks.tasks.example.add_task",
+        task_name="celery_app.tasks.example.add_task",
         args=[a, b],
         countdown=0  # 延迟执行秒数
     )
@@ -391,7 +392,7 @@ async def run_add_task(a: int, b: int):
 # 无需手动激活虚拟环境，uv run 会自动处理
 uv run python main.py
 uv run pytest tests/
-uv run celery -A celery_tasks worker --loglevel=info
+uv run python main.py
 ```
 
 **方式 2：先激活虚拟环境**
@@ -490,7 +491,7 @@ logger.error("数据库连接失败")
 - [ ] Request 模型是否继承自 `IBaseModel`？
 - [ ] Response 模型是否继承自 `BaseResponse`？
 - [ ] 路由是否分模块编写并使用 `create_router()`？
-- [ ] 异步任务是否定义在 `celery_tasks/` 中？
+- [ ] 异步任务是否定义在 `celery_app/tasks/` 中，并由 `celery_app/server.py` 自动加载？
 - [ ] 是否更新了相关文档？
 - [ ] 类型注解是否完整？
 - [ ] 日志输出是否合理？
@@ -522,11 +523,8 @@ uv run python your_script.py
 # 运行测试
 uv run pytest tests/
 
-# 启动 Celery Worker
-uv run celery -A celery_tasks worker --loglevel=info
-
-# 启动 Celery Beat
-uv run celery -A celery_tasks beat --loglevel=info
+# 启动项目主入口（自动拉起 Celery Worker/Beat 与 FastAPI）
+uv run python main.py
 
 # 安装依赖
 uv add package_name
@@ -543,7 +541,7 @@ source .venv/bin/activate  # Linux/Mac
 1. **创建模块目录** → `app/modules/my_feature/`
 2. **创建路由与结构定义** → `app/modules/my_feature/routes.py`（使用 `create_router("my_feature")`），并按需补充 `schemas.py`、`service.py`、`dependencies.py`、`models.py`
 3. **自动注册路由** → 由顶层 `app/routers.py` 自动扫描 `app/modules/*/routes.py` 并装配根路由，不需要额外手工注册文件
-4. **创建任务**（可选）→ `celery_tasks/tasks/my_feature.py`
+4. **创建任务**（可选）→ `celery_app/tasks/my_feature.py`
 5. **更新文档** → 更新 `README.md` 和相关 `docs/` 说明，避免临时文档
 
 ### 代码移动操作流程
@@ -573,7 +571,7 @@ from app.shared.schemas import IBaseModel, BaseResponse
 from app.shared.routes import create_router
 
 # Celery 任务
-from celery_tasks.celery_app import app as celery_app
+from celery_app.server import app as celery_app
 
 # 工具函数
 from app.utils.celery_client import send_task

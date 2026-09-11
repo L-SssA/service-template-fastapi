@@ -31,17 +31,19 @@ service-template-fastapi/
 │   │       └── dependencies.py  # 认证/角色依赖（按需存在）
 │   ├── shared/            # 公共接口、基类、路由工厂
 │   └── utils/             # 工具函数
-├── celery_tasks/          # Celery 异步任务模块
-│   ├── __init__.py
-│   ├── celery_app.py
-│   ├── config.py
-│   ├── tasks/             # 任务定义
-│   └── beats/             # 定时任务定义
+├── celery_app/            # Celery 应用包
+│   ├── config.py          # Celery 配置与 Beat schedule
+│   ├── server.py          # Celery 实例创建与自动加载任务
+│   └── tasks/             # 任务定义
+│       ├── __init__.py
+│       ├── example.py
+│       └── example_beats.py
+├── migrations/            # Alembic 数据库迁移目录
 ├── public/                # 静态资源
 ├── docs/                  # 文档目录
 ├── scripts/               # 脚本目录
 ├── config.dev.toml        # 开发环境配置
-├── main.py                # 应用入口文件
+├── main.py                # 应用入口文件（启动 FastAPI 与 Celery）
 ├── pyproject.toml         # 项目配置和依赖
 └── uv.toml                # uv 工具配置
 ```
@@ -81,29 +83,20 @@ pip install -e .
 
 ### 运行项目
 
-**步骤 1: 启动 Celery Worker** (新终端窗口)
+项目默认同时启动 FastAPI 服务与 Celery Worker/Beat 进程；在 Windows 平台下会单独创建 Worker 和 Beat 进程，在类 Unix 平台下会以一个 Celery 进程同时承载 Worker + Beat。
 
 ```bash
-# Windows/Linux/macOS 统一使用 Python 脚本
-uv run python scripts/start_celery.py worker
-
-# 或者使用原生命令（不推荐）
-uv run celery -A celery_tasks worker --loglevel=info --pool=solo
-```
-
-**步骤 2: 启动 FastAPI 应用**
-
-```bash
-# 命令行运行
+# 一条命令启动应用与 Celery
 uv run python main.py
 ```
 
-如果 Worker 已启动，应用会显示：`检测到 X 个活跃的 Celery Worker`
+如果 Redis 和 Celery Worker 已就绪，应用启动时会通过 `app.utils.celery_client` 检查连接并打印：`检测到 X 个活跃的 Celery Worker`。
 
 #### 生产模式
 
 ```bash
-uv run python main.py --env prod
+# 通过环境变量切换配置文件，例如：ENV=prod
+ENV=prod uv run python main.py
 ```
 
 ### 访问接口文档
@@ -193,12 +186,8 @@ enable_utc = true
 **启动定时任务:**
 
 ```bash
-# 方式 1: Worker + Beat 一体化（推荐，开发测试环境）
-uv run python scripts/start_celery.py all  # 跨平台统一命令
-
-# 方式 2: 分别启动 Worker 和 Beat（生产环境推荐）
-uv run python scripts/start_celery.py worker &  # Worker
-uv run python scripts/start_celery.py beat      # Beat（新终端）
+# 推荐方式：直接用主入口启动，Celery 进程会按平台自动拉起 Worker/Beat
+uv run python main.py
 ```
 
 详细使用指南请参考 [docs/CELERY_BEAT_USAGE.md](docs/CELERY_BEAT_USAGE.md)。
@@ -215,20 +204,13 @@ uv run python scripts/start_celery.py beat      # Beat（新终端）
    docker run -d -p 6379:6379 redis:latest
    ```
 
-2. **启动 Celery Worker** (新终端窗口):
+2. **启动 FastAPI 与 Celery 进程**:
 
    ```bash
-   # Windows/Linux/macOS 统一使用 Python 脚本
-   uv run python scripts/start_celery.py worker
+   uv run python main.py
    ```
 
-3. **启动 FastAPI 应用**:
-
-   ```bash
-   python main.py
-   ```
-
-4. **调用异步任务**:
+3. **调用异步任务**:
    - 访问 Swagger UI: http://localhost:8800/docs
    - 查看 `/celery/*` 端点（创建任务）
    - 查看 `/tasks/*` 端点（任务管理）

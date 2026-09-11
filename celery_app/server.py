@@ -1,10 +1,11 @@
 from celery import Celery
 from .config import celery_config, beat_schedule, beat_scheduler_timezone
+from .tasks import load_tasks
 
 
 # 创建 Celery 实例
 app = Celery(
-    'celery_tasks',
+    'celery_app',
     broker=celery_config['broker_url'],
     backend=celery_config['result_backend'],
 )
@@ -37,4 +38,4 @@ app.conf.update(
     beat_scheduler_timezone=beat_scheduler_timezone,
 )
 
-app.autodiscover_tasks(['celery_tasks.tasks'])
+load_tasks()

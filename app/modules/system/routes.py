@@ -4,7 +4,8 @@
 """
 from app.utils.decorators import exception_handler
 from app.shared.routes import create_router
-from app.utils.celery_client import send_task
+from app.utils.celery_client import client
+from app.utils import http_utils
 
 from .schemas import (
     CeleryStatusData,
@@ -20,36 +21,20 @@ async def celery_status():
     """
     检查 Celery 服务状态
 
-    用于验证 Celery Worker 是否正常运行，通过发送一个测试任务来检测
+    用于验证 Celery Worker 是否正常运行
 
     Returns:
         Celery 服务状态信息
-
-    Example:
-        >>> GET /system/celery-status
-        {
-            "code": 200,
-            "data": {
-                "status": "healthy",
-                "message": "Celery Worker is available",
-                "test_task_result": "2"
-            },
-            "message": "Celery Worker is available"
-        }
     """
-    # 发送一个简单的测试任务
-    result = send_task(
-        "celery_tasks.tasks.example.add_task",
-        args=[1, 1]
-    )
-    task_result = result.get(timeout=5)
 
-    return CeleryStatusResponse(
+    status = client.check_celery_connection()
+
+    return http_utils.get_response(
         code=200,
-        data=CeleryStatusData(
-            status="healthy",
-            message="Celery Worker is available",
-            test_task_result=str(task_result),
-        ),
-        message="Celery Worker is available"
+        data={
+            "connected": status["connected"],
+            "workers_count": status["workers_count"],
+            "error": status["error"],
+        },
+        message="操作成功"
     )

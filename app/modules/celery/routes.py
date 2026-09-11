@@ -4,24 +4,18 @@ Celery 异步任务示例路由
 """
 from app.shared.routes import create_router
 from app.utils.decorators import exception_handler
-from app.utils.celery_client import send_task
-
+from app.utils.celery_client import client
 
 from .schemas import (
-    AddTaskRequest,
-    SleepTaskRequest,
-    LogTaskRequest,
     TaskData,
     TaskResponse,
 )
 
-
 router = create_router("celery")
-
 
 @router.post("/tasks/add", summary="创建加法异步任务", response_model=TaskResponse)
 @exception_handler("创建加法任务")
-async def create_add_task(request: AddTaskRequest):
+async def create_add_task(a: int, b: int):
     """
     创建加法异步任务
 
@@ -31,76 +25,11 @@ async def create_add_task(request: AddTaskRequest):
     Returns:
         任务 ID 和状态
     """
-    result = send_task(
-        "celery_tasks.tasks.example.add_task",
-        args=[request.a, request.b]
+    result = client.send_task(
+        "celery_app.tasks.example.add_task",
+        args=[a, b]
     )
 
-    return TaskResponse(
-        code=200,
-        data=TaskData(
-            task_id=result.id,
-            status="pending",
-        ),
-        message=f"Task created: {request.a} + {request.b}"
-    )
+    res_data = TaskData(task_id=result.id, status="pending")
 
-
-@router.post("/tasks/sleep", summary="创建睡眠异步任务", response_model=TaskResponse)
-@exception_handler("创建睡眠任务")
-async def create_sleep_task(request: SleepTaskRequest):
-    """
-    创建睡眠异步任务
-
-    Args:
-        request: 包含睡眠秒数和可选延迟的请求体
-
-    Returns:
-        任务 ID 和状态
-    """
-    options = {}
-    if request.delay > 0:
-        options["countdown"] = request.delay
-
-    result = send_task(
-        "celery_tasks.tasks.example.sleep_task",
-        args=[request.seconds],
-        **options
-    )
-
-    return TaskResponse(
-        code=200,
-        data=TaskData(
-            task_id=result.id,
-            status="pending",
-            delay=request.delay if request.delay > 0 else None,
-        ),
-        message=f"Sleep task created for {request.seconds} seconds"
-    )
-
-
-@router.post("/tasks/log", summary="创建日志测试异步任务", response_model=TaskResponse)
-@exception_handler("创建日志任务")
-async def create_log_task(request: LogTaskRequest):
-    """
-    创建日志测试异步任务
-
-    Args:
-        request: 包含日志级别和消息的请求体
-
-    Returns:
-        任务 ID 和状态
-    """
-    result = send_task(
-        "celery_tasks.tasks.logger_task.log_message",
-        args=[request.level, request.message]
-    )
-
-    return TaskResponse(
-        code=200,
-        data=TaskData(
-            task_id=result.id,
-            status="pending",
-        ),
-        message=f"Log task created: [{request.level.upper()}] {request.message}"
-    )
+    return TaskResponse(code=200, data=res_data, message=f"Add Task Created: {a} + {b}")

@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 
 
 from .utils import sys_utils
-from .utils.celery_client import check_celery_status
+from .utils.celery_client import client
 from .utils.logger import init_logger
 from .routers import register_routers
 from .exceptions import register_exception_handlers
@@ -20,7 +20,7 @@ async def lifespan(app: FastAPI):
     init_logger()
 
     # Celery 连接性检查
-    check_celery_status()
+    client.check_celery_status()
 
     print_host = "127.0.0.1" if config.listen_host == "0.0.0.0" else config.listen_host
     docs_url = f"http://{print_host}:{config.listen_port}/docs"

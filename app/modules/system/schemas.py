@@ -11,9 +11,9 @@ from app.shared.schemas import IBaseModel, BaseResponse
 # ============== Response Models ==============
 class CeleryStatusData(IBaseModel):
     """Celery 状态数据"""
-    status: str = Field(..., description="Celery 状态")
-    message: str = Field(..., description="状态消息")
-    test_task_result: Optional[str] = Field(None, description="测试任务结果")
+    connected: bool = Field(..., description="是否连接成功")
+    workers: int = Field(0, description="worker 数量")
+    error: Optional[str] = Field(None, description="错误信息")
 
 
 class CeleryStatusResponse(BaseResponse):

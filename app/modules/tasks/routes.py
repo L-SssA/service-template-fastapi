@@ -4,12 +4,12 @@
 """
 from app.utils.decorators import exception_handler
 from app.shared.routes import create_router
-from app.utils.celery_client import get_task_result, get_task_status, revoke_task
+from app.utils.celery_client import client
+from app.utils import http_utils
 
 from .schemas import (
     TaskInfo,
     TaskInfoResponse,
-    CancelTaskRequest,
     CancelTaskResponse,
 )
 
@@ -29,43 +29,25 @@ async def get_task_info(task_id: str):
 
     Returns:
         任务状态和结果（如果已完成）
-
-    Examples:
-        - 查询任务状态：GET /tasks/{task_id}
-        - 成功任务会返回 result 字段
-        - 失败任务会返回 error 字段
     """
-    status = get_task_status(task_id)
+    status = client.get_task_status(task_id)
 
-    task_info = TaskInfo(
-        task_id=task_id,
-        status=status,
-    )
+    task_info = TaskInfo(task_id=task_id, status=status)
 
     # 如果任务已完成，尝试获取结果
-    if status == "SUCCESS":
+    if status in ("SUCCESS", "FAILURE"):
         try:
-            result = get_task_result(task_id, timeout=2)
+            result = client.get_task_result(task_id, timeout=2)
             task_info.result = str(result)
-        except Exception as e:
-            task_info.result_error = str(e)
-    elif status == "FAILURE":
-        try:
-            result = get_task_result(task_id, timeout=2)
-            task_info.error = str(result)
         except Exception as e:
             task_info.error = str(e)
 
-    return TaskInfoResponse(
-        code=200,
-        data=task_info,
-        message=f"Task status: {status}"
-    )
+    return http_utils.get_response(code=200, data=task_info, message="获取成功")
 
 
 @router.delete("/{task_id}", summary="取消/终止任务", response_model=CancelTaskResponse)
 @exception_handler("取消任务")
-async def cancel_task(task_id: str, request: CancelTaskRequest):
+async def cancel_task(task_id: str, force: bool = False):
     """
     取消/终止任务
 
@@ -77,24 +59,7 @@ async def cancel_task(task_id: str, request: CancelTaskRequest):
             - terminate: True 表示强制终止正在运行的任务，False 仅取消未开始的任务
 
     Returns:
-        操作结果
-
-    Examples:
-        - 仅取消未开始的任务：DELETE /tasks/{task_id} {"terminate": false}
-        - 强制终止运行中的任务：DELETE /tasks/{task_id} {"terminate": true}
-
-    Note:
-        - terminate=False: 只取消尚未开始执行的任务
-        - terminate=True: 会强制终止正在执行的任务（可能导致数据不一致）
+        操作结果 
     """
-    revoke_task(task_id, terminate=request.terminate)
-    action = "terminated" if request.terminate else "revoked"
-
-    return CancelTaskResponse(
-        code=200,
-        data={
-            "task_id": task_id,
-            "message": f"Task has been {action}",
-        },
-        message=f"Task has been {action}"
-    )
+    client.revoke_task(task_id, terminate=force)
+    return http_utils.get_response(code=200, data=task_id, message="操作成功")
