@@ -26,3 +26,8 @@ celerybeat-schedule.db
 # 持久化缓存目录
 redis_data
 postgres_data
+
+# 环境配置文件
+.env
+config.*.toml
+!config.example.toml

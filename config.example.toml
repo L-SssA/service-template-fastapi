@@ -32,3 +32,11 @@ jwt_secret = "b0eba054680ac03bca22bdeffebdc8ff"
 jwt_algorithm = "HS256"
 jwt_expiry_seconds = 3600
 jwt_refresh_expiry_seconds = 86400
+
+[mail]
+mail_username = ""
+mail_password = ""
+mail_server = "smtp.qq.com"
+mail_port = 465
+mail_from_email = ""
+mail_from_name = "FastAPI"

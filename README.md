@@ -94,10 +94,7 @@ uv run celery -A celery_tasks worker --loglevel=info --pool=solo
 **步骤 2: 启动 FastAPI 应用**
 
 ```bash
-# 显式指定环境
-uv run python main.py --env dev
-
-# 或者直接运行（默认 dev 环境）
+# 命令行运行
 uv run python main.py
 ```
 
