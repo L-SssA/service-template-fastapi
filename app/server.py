@@ -19,6 +19,9 @@ async def lifespan(app: FastAPI):
     # 服务启动前执行
     init_logger()
 
+    # Celery 连接性检查
+    celery_client.check_celery_status()
+
     docs_url = f"http://{config.print_host}:{config.listen_port}/docs"
     logger.success(f"服务启动成功，启动环境 {config.env}，查看文档：{docs_url}")
     yield
