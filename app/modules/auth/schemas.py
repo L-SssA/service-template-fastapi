@@ -52,3 +52,13 @@ class LoginDataModel(IBaseModel):
 
 class LoginResponse(BaseResponse):
     data: Optional[LoginDataModel] = Field(..., description="用户信息")
+
+
+class PasswordResetRequestModel(IBaseModel):
+    email: str = Field(..., description="邮箱", max_length=40)
+
+class PasswordResetConfirmModel(IBaseModel):
+    new_password: str = Field(
+        ..., description="新密码", min_length=6, max_length=24)
+    confirm_new_password: str = Field(
+        ..., description="确认新密码", min_length=6, max_length=24)

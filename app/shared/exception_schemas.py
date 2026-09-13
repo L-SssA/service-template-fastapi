@@ -33,3 +33,7 @@ class RefreshTokenRequiredException(HttpException):
 class PermissionNotAllowedException(HttpException):
     def __init__(self):
         super().__init__(status_code=403, message="您没有权限执行此操作")
+
+class AccountNotVerify(Exception):
+    def __init__(self):
+        super().__init__(status_code=403, message="账号未验证")

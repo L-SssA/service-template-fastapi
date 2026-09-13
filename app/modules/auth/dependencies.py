@@ -5,6 +5,7 @@ from fastapi.security.http import HTTPAuthorizationCredentials
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.shared.exception_schemas import (
+    AccountNotVerify,
     InvalidTokenException,
     AccessTokenRequiredException,
     PermissionNotAllowedException,
@@ -72,6 +73,9 @@ class RoleChecker:
         self.allowed_roles = allowed_roles
 
     def __call__(self, current_user: User = Depends(get_current_user_from_token)):
+        if not current_user.is_verified:
+            raise AccountNotVerify()
+
         if current_user.role not in self.allowed_roles:
             raise PermissionNotAllowedException()
         return True

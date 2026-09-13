@@ -7,12 +7,18 @@ from app.utils import http_utils
 from app.shared.routes import create_router
 from app.utils.decorators import exception_handler
 from app.db import get_session
-from app.utils.auth import verify_password, create_token_pairs, create_url_safe_token, decode_url_safe_token
+from app.utils.auth import (
+    verify_password,
+    create_token_pairs,
+    create_url_safe_token,
+    decode_url_safe_token,
+    generate_password_hash
+)
 from app.db.redis import add_jti_to_blocklist
 from app import config
 from app.utils.mail import create_message, mail
 
-from .schemas import UserCreateModel, UserLoginModel, UserResponse, UserBooksResponse, LoginResponse
+from .schemas import PasswordResetConfirmModel, PasswordResetRequestModel, UserCreateModel, UserLoginModel, UserResponse, UserBooksResponse, LoginResponse
 from .service import UserService
 from .dependencies import (
     AccessTokenBearer,
@@ -154,3 +160,46 @@ async def revoke_token(
     await add_jti_to_blocklist(jti)
 
     return http_utils.get_response(code=200, message="退出登录成功", data=None)
+
+
+@router.post("/password-reset-request", summary="密码重置请求")
+@exception_handler("密码重置请求")
+async def password_reset_request(email_data: PasswordResetRequestModel):
+    email = email_data.email
+    verify_token = create_url_safe_token({"email": email})
+    link = f"http://{config.print_host}:{config.listen_port}/auth/password-reset-confirm/{verify_token}"
+    html_message = f"""
+        <h1>重置您的密码</h1>
+        <p>请点击以下链接重置您的密码：</p>
+        <a href="{link}">重置密码</a>
+        """
+    message = create_message(
+        recipients=[email],
+        subject="验证您的邮箱",
+        body=html_message
+    )
+    await mail.send_message(message)
+
+    return http_utils.get_response(code=200, message="密码重置链接已发送到您的邮箱")
+
+@router.post("/password-reset-confirm/{verify_token}", summary="重置密码确认")
+@exception_handler("重置密码确认")
+async def reset_password(verify_token: str, password: PasswordResetConfirmModel, session: AsyncSession = Depends(get_session)):
+    new_password = password.new_password
+    confirm_new_password = password.confirm_new_password
+    if new_password != confirm_new_password:
+        return http_utils.get_response(code=400, message="两次输入的密码不一致")
+
+    token_data = decode_url_safe_token(verify_token)
+    user_email = token_data.get("email")
+    if user_email:
+        user = await user_service.get_user_by_email(user_email, session)
+        if not user:
+            return http_utils.get_response(code=404, message="用户不存在")
+
+        password_hash = generate_password_hash(new_password)
+        await user_service.update_user(user, {"password_hash": password_hash}, session)
+
+        return http_utils.get_response(code=200, message="密码重置成功")
+
+    return http_utils.get_response(code=400, message="验证令牌无效或已过期")
