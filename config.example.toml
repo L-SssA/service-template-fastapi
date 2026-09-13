@@ -26,6 +26,7 @@ dbname = "mypostgres"
 host = "localhost"
 port = 6379
 db = 0
+db_1 = 1
 jti_expiry_seconds = 3600
 
 [auth]

@@ -4,7 +4,7 @@ Celery 异步任务示例路由
 """
 from app.shared.routes import create_router
 from app.utils.decorators import exception_handler
-from app.utils.celery_client import client
+from app.utils.celery_client import celery_client
 
 from .schemas import (
     TaskData,
@@ -13,23 +13,14 @@ from .schemas import (
 
 router = create_router("celery")
 
-@router.post("/tasks/add", summary="创建加法异步任务", response_model=TaskResponse)
-@exception_handler("创建加法任务")
-async def create_add_task(a: int, b: int):
-    """
-    创建加法异步任务
-
-    Args:
-        request: 包含两个加数的请求体
-
-    Returns:
-        任务 ID 和状态
-    """
-    result = client.send_task(
-        "celery_app.tasks.example.add_task",
+@router.post("/tasks/division_task", summary="创建除法异步任务", response_model=TaskResponse)
+@exception_handler("创建除法任务")
+async def create_division_task(a: int, b: int):
+    result = celery_client.send_task(
+        "celery_app.tasks.example.division_task",
         args=[a, b]
     )
 
-    res_data = TaskData(task_id=result.id, status="pending")
+    res_data = TaskData(task_id=result.id, status=result.state)
 
-    return TaskResponse(code=200, data=res_data, message=f"Add Task Created: {a} + {b}")
+    return TaskResponse(code=200, data=res_data, message=f"创建成功")

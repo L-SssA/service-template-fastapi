@@ -16,7 +16,7 @@ from app.utils.auth import (
 )
 from app.db.redis import add_jti_to_blocklist
 from app import config
-from app.utils.mail import create_message, mail
+from app.utils.celery_client import celery_client
 
 from .schemas import PasswordResetConfirmModel, PasswordResetRequestModel, UserCreateModel, UserLoginModel, UserResponse, UserBooksResponse, LoginResponse
 from .service import UserService
@@ -37,7 +37,7 @@ role_checker = RoleChecker(["admin", 'user'])
 @exception_handler("用户注册")
 async def create_user_account(
     user_data: UserCreateModel,
-    session: AsyncSession = Depends(get_session)
+    session: AsyncSession = Depends(get_session),
 ):
     email = user_data.email
     user_exists = await user_service.user_exists(email, session)
@@ -56,12 +56,15 @@ async def create_user_account(
     <p>请点击以下链接验证您的邮箱：</p>
     <a href="{link}">验证邮箱</a>
     """
-    message = create_message(
-        recipients=[email],
-        subject="验证您的邮箱",
-        body=html_message
+
+    celery_client.send_task(
+        "celery_app.tasks.message.send_message",
+        kwargs={
+            "recipients": [email],
+            "subject": "验证您的邮箱",
+            "body": html_message
+        }
     )
-    await mail.send_message(message)
 
     return http_utils.get_response(code=200, message="注册成功，请查看您的邮箱并验证您的账户", data=new_user)
 
@@ -164,7 +167,9 @@ async def revoke_token(
 
 @router.post("/password-reset-request", summary="密码重置请求")
 @exception_handler("密码重置请求")
-async def password_reset_request(email_data: PasswordResetRequestModel):
+async def password_reset_request(
+    email_data: PasswordResetRequestModel,
+):
     email = email_data.email
     verify_token = create_url_safe_token({"email": email})
     link = f"http://{config.print_host}:{config.listen_port}/auth/password-reset-confirm/{verify_token}"
@@ -173,12 +178,15 @@ async def password_reset_request(email_data: PasswordResetRequestModel):
         <p>请点击以下链接重置您的密码：</p>
         <a href="{link}">重置密码</a>
         """
-    message = create_message(
-        recipients=[email],
-        subject="验证您的邮箱",
-        body=html_message
+
+    celery_client.send_task(
+        "celery_app.tasks.message.send_message",
+        kwargs={
+            "recipients": [email],
+            "subject": "重置您的密码",
+            "body": html_message
+        }
     )
-    await mail.send_message(message)
 
     return http_utils.get_response(code=200, message="密码重置链接已发送到您的邮箱")
 

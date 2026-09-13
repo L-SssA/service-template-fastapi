@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 
 
 from .utils import sys_utils
-from .utils.celery_client import client
+from .utils.celery_client import celery_client
 from .utils.logger import init_logger
 from .routers import register_routers
 from .exceptions import register_exception_handlers
@@ -18,9 +18,6 @@ from .middlewares import register_middleware
 async def lifespan(app: FastAPI):
     # 服务启动前执行
     init_logger()
-
-    # Celery 连接性检查
-    client.check_celery_status()
 
     docs_url = f"http://{config.print_host}:{config.listen_port}/docs"
     logger.success(f"服务启动成功，启动环境 {config.env}，查看文档：{docs_url}")

@@ -61,6 +61,7 @@ _redis_cfg: dict = _env_config.get("redis", {})
 redis_host = _redis_cfg.get("host", "localhost")
 redis_port = _redis_cfg.get("port", 6379)
 redis_db = _redis_cfg.get("db", 0)
+redis_url = f"redis://{redis_host}:{redis_port}/{redis_db}"
 redis_jti_expiry_seconds = _redis_cfg.get("jti_expiry_seconds", 3600)
 
 # 认证相关配置

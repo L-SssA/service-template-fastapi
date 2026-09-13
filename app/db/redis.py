@@ -1,12 +1,8 @@
-import aioredis
+import redis.asyncio as aioredis
 
 import app.config as config
 
-token_blocklist = aioredis.StrictRedis(
-    host=config.redis_host,
-    port=config.redis_port,
-    db=config.redis_db
-)
+token_blocklist = aioredis.from_url(config.redis_url)
 
 async def add_jti_to_blocklist(jti: str) -> None:
     await token_blocklist.set(jti, "", ex=config.redis_jti_expiry_seconds)

@@ -4,7 +4,7 @@
 """
 from app.utils.decorators import exception_handler
 from app.shared.routes import create_router
-from app.utils.celery_client import client
+from app.utils.celery_client import celery_client
 from app.utils import http_utils
 
 from .schemas import (
@@ -30,14 +30,14 @@ async def get_task_info(task_id: str):
     Returns:
         任务状态和结果（如果已完成）
     """
-    status = client.get_task_status(task_id)
+    status = celery_client.get_task_status(task_id)
 
     task_info = TaskInfo(task_id=task_id, status=status)
 
     # 如果任务已完成，尝试获取结果
     if status in ("SUCCESS", "FAILURE"):
         try:
-            result = client.get_task_result(task_id, timeout=2)
+            result = celery_client.get_task_result(task_id, timeout=2)
             task_info.result = str(result)
         except Exception as e:
             task_info.error = str(e)
@@ -61,5 +61,5 @@ async def cancel_task(task_id: str, force: bool = False):
     Returns:
         操作结果 
     """
-    client.revoke_task(task_id, terminate=force)
+    celery_client.revoke_task(task_id, terminate=force)
     return http_utils.get_response(code=200, data=task_id, message="操作成功")

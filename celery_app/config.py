@@ -1,7 +1,29 @@
-from celery.schedules import crontab
+from pydantic_settings import BaseSettings, SettingsConfigDict
 import os
 from app.utils import tools
 
+
+class EnvSettings(BaseSettings):
+    """环境标识"""
+    ENV: str = "dev"
+
+    """PGSQL 配置"""
+    PGSQL_USERNAME: str = ""
+    PGSQL_PASSWORD: str = ""
+
+    """JWT 配置"""
+    JWT_SECRET: str = ""
+
+    """MAIL 配置"""
+    MAIL_USERNAME: str = ""
+    MAIL_PASSWORD: str = ""
+    MAIL_FROM: str = ""
+
+    model_config = SettingsConfigDict(
+        env_file='.env', env_file_encoding='utf-8')
+
+
+env_settings = EnvSettings()
 
 # 加载配置文件
 env = os.getenv("ENV", "dev")
@@ -15,15 +37,16 @@ _redis_cfg: dict = _env_config.get("redis", {})
 redis_host = _redis_cfg.get("host", "localhost")
 redis_port = _redis_cfg.get("port", 6379)
 redis_db = _redis_cfg.get("db", 0)
+redis_db_1 = _redis_cfg.get("db_1", 1)
+redis_url = f"redis://{redis_host}:{redis_port}/{redis_db}"
+redis_url_1 = f"redis://{redis_host}:{redis_port}/{redis_db_1}"
 redis_password = _redis_cfg.get("password", "") or None
 
 
 # Celery 配置
 _celery_cfg: dict = _env_config.get("celery", {})
-broker_url = _celery_cfg.get(
-    "broker_url", f"redis://{redis_host}:{redis_port}/{redis_db}")
-result_backend = _celery_cfg.get(
-    "result_backend", f"redis://{redis_host}:{redis_port}/1")
+broker_url = _celery_cfg.get("broker_url", redis_url)
+result_backend = _celery_cfg.get("result_backend", redis_url_1)
 task_serializer = _celery_cfg.get("task_serializer", "json")
 result_serializer = _celery_cfg.get("result_serializer", "json")
 accept_content = _celery_cfg.get("accept_content", ["json"])
@@ -32,29 +55,11 @@ enable_utc = _celery_cfg.get("enable_utc", True)
 log_level = _celery_cfg.get("log_level", "info")
 
 
-# Celery 配置字典
-celery_config = {
-    "broker_url": broker_url,
-    "result_backend": result_backend,
-    "task_serializer": task_serializer,
-    "result_serializer": result_serializer,
-    "accept_content": accept_content,
-    "timezone": timezone,
-    "enable_utc": enable_utc,
-    "worker_hijack_root_logger": False,  # 不使用 Celery 的根日志，使用 Loguru
-    "worker_log_level": _env_config.get("service", {}).get("log_level", "debug"),
-}
-
-
-# Celery Beat 定时任务配置
-beat_schedule = {
-    # ========== 示例任务 ==========
-    # 每分钟打印时间
-    # "print-time-every-minute": {
-    #     "task": "celery_app.beats.example.print_time_task",
-    #     "schedule": 5.0,
-    # },
-}
-
-# 时区设置（用于 Beat）
-beat_scheduler_timezone = timezone
+# mail 相关配置
+_mail_cfg: dict = _env_config.get("mail", {})
+mail_username = _mail_cfg.get("username", "") or env_settings.MAIL_USERNAME
+mail_password = _mail_cfg.get("password", "") or env_settings.MAIL_PASSWORD
+mail_server = _mail_cfg.get("mail_server", "")
+mail_port = _mail_cfg.get("mail_port", 465)
+mail_from = _mail_cfg.get("mail_from", "") or env_settings.MAIL_FROM
+mail_from_name = _mail_cfg.get("mail_from_name", "")

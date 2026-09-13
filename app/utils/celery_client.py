@@ -2,14 +2,13 @@
 Celery 客户端工具类
 用于 FastAPI 应用中调用 Celery 异步任务
 """
-from typing import Any, List, Dict, Optional, NamedTuple
+from typing import Any, List, Dict, Optional
 from celery.result import AsyncResult
 from loguru import logger
 
 
 class CeleryClient:
     """Celery 客户端封装类"""
-
     _celery_instance = None
 
     @property
@@ -211,4 +210,4 @@ class CeleryClient:
         return result
 
 
-client = CeleryClient()
+celery_client = CeleryClient()
