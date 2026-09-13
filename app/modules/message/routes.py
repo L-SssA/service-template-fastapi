@@ -3,11 +3,11 @@ from app.utils.decorators import exception_handler
 from app.utils.mail import create_message, mail
 from app.utils import http_utils
 
-from .schemas import EmailModel
+from .schemas import EmailModel, SendEmailResponse
 
 router = create_router("email")
 
-@router.post('/send_email', summary="发送邮件")
+@router.post('/send_email', summary="发送邮件", response_model=SendEmailResponse)
 @exception_handler("发送邮件")
 async def send_email(emails: EmailModel):
     addresses = emails.addresses

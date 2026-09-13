@@ -1,13 +1,18 @@
 import jwt
 import uuid
+import bcrypt
 
 from loguru import logger
 from datetime import timedelta, datetime
-from passlib.context import CryptContext
+from itsdangerous import URLSafeTimedSerializer
 
 import app.config as config
 
-password_context = CryptContext(schemes=["bcrypt"])
+
+serializer = URLSafeTimedSerializer(
+    secret_key=config.jwt_secret_key,
+    salt="email-configuration"
+)
 
 
 def generate_password_hash(password: str) -> str:
@@ -17,7 +22,7 @@ def generate_password_hash(password: str) -> str:
     :param password: 明文密码
     :return: 哈希值
     """
-    return password_context.hash(password)
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 
 def verify_password(password: str, hash: str) -> bool:
@@ -28,7 +33,7 @@ def verify_password(password: str, hash: str) -> bool:
     :param hash: 哈希值
     :return: 是否匹配
     """
-    return password_context.verify(password, hash)
+    return bcrypt.checkpw(password.encode("utf-8"), hash.encode("utf-8"))
 
 
 def create_access_token(
@@ -89,5 +94,17 @@ def decode_token(token: str) -> dict:
             algorithms=[config.jwt_algorithm],
         )
     except jwt.PyJWTError as e:
+        logger.error(e)
+        return None
+
+
+def create_url_safe_token(data: dict):
+    return serializer.dumps(data)
+
+
+def decode_url_safe_token(token: str):
+    try:
+        return serializer.loads(token)
+    except Exception as e:
         logger.error(e)
         return None

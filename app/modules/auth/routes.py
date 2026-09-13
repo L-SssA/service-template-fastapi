@@ -7,8 +7,10 @@ from app.utils import http_utils
 from app.shared.routes import create_router
 from app.utils.decorators import exception_handler
 from app.db import get_session
-from app.utils.auth import verify_password, create_token_pairs
+from app.utils.auth import verify_password, create_token_pairs, create_url_safe_token, decode_url_safe_token
 from app.db.redis import add_jti_to_blocklist
+from app import config
+from app.utils.mail import create_message, mail
 
 from .schemas import UserCreateModel, UserLoginModel, UserResponse, UserBooksResponse, LoginResponse
 from .service import UserService
@@ -36,9 +38,41 @@ async def create_user_account(
 
     if user_exists:
         return http_utils.get_response(code=400, message="邮箱已被注册", data=None)
-    else:
-        new_user = await user_service.create_user(user_data, session)
-        return http_utils.get_response(code=200, message="注册成功", data=new_user)
+
+    # 创建用户
+    new_user = await user_service.create_user(user_data, session)
+
+    # 发送验证邮件
+    verify_token = create_url_safe_token({"email": email})
+    link = f"http://{config.print_host}:{config.listen_port}/auth/verify/{verify_token}"
+    html_message = f"""
+    <h1>验证邮箱</h1>
+    <p>请点击以下链接验证您的邮箱：</p>
+    <a href="{link}">验证邮箱</a>
+    """
+    message = create_message(
+        recipients=[email],
+        subject="验证您的邮箱",
+        body=html_message
+    )
+    await mail.send_message(message)
+
+    return http_utils.get_response(code=200, message="注册成功，请查看您的邮箱并验证您的账户", data=new_user)
+
+@router.get("/verify/{verify_token}", summary="验证邮箱")
+@exception_handler("验证邮箱")
+async def verify_email(verify_token: str, session: AsyncSession = Depends(get_session)):
+    token_data = decode_url_safe_token(verify_token)
+    user_email = token_data.get("email")
+    if user_email:
+        user = await user_service.get_user_by_email(user_email, session)
+        if not user:
+            return http_utils.get_response(code=404, message="用户不存在")
+        await user_service.update_user(user, {"is_verified": True}, session)
+
+        return http_utils.get_response(code=200, message="邮箱验证成功")
+
+    return http_utils.get_response(code=400, message="验证令牌无效或已过期")
 
 
 @router.post("/login", summary="用户登录", response_model=LoginResponse)

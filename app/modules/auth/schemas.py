@@ -28,11 +28,11 @@ class UserCreateModel(IBaseModel):
     email: str = Field(..., description="邮箱", max_length=40)
     first_name: str = Field(..., description="名", max_length=30)
     last_name: str = Field(..., description="姓", max_length=30)
-    password: str = Field(..., description="密码", min_length=6)
+    password: str = Field(..., description="密码", min_length=6, max_length=24)
 
 class UserLoginModel(IBaseModel):
     email: str = Field(..., description="邮箱", max_length=40)
-    password: str = Field(..., description="密码", min_length=6)
+    password: str = Field(..., description="密码", min_length=6, max_length=24)
 
 class UserResponse(BaseResponse):
     data: Optional[UserModel] = Field(..., description="用户信息")

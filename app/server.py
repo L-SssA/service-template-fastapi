@@ -22,8 +22,7 @@ async def lifespan(app: FastAPI):
     # Celery 连接性检查
     client.check_celery_status()
 
-    print_host = "127.0.0.1" if config.listen_host == "0.0.0.0" else config.listen_host
-    docs_url = f"http://{print_host}:{config.listen_port}/docs"
+    docs_url = f"http://{config.print_host}:{config.listen_port}/docs"
     logger.success(f"服务启动成功，启动环境 {config.env}，查看文档：{docs_url}")
     yield
     # 服务关闭前执行

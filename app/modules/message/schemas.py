@@ -6,3 +6,6 @@ from pydantic import Field
 
 class EmailModel(IBaseModel):
     addresses: List[str] = Field(..., description="Email 地址列表")
+
+class SendEmailResponse(BaseResponse):
+    pass

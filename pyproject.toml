@@ -13,9 +13,10 @@ dependencies = [
   "sqlmodel>=0.0.42",
   "asyncpg>=0.31.0",
   "alembic>=1.19.1",
-  "passlib[bcrypt]>=1.7.4",
   "pyjwt>=2.13.0",
   "pydantic-settings>=2.15.0",
   "fastapi-mail>=1.6.2",
   "aioredis>=2.0.1",
+  "itsdangerous>=2.2.0",
+  "bcrypt>=5.0.0",
 ]

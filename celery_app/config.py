@@ -50,10 +50,10 @@ celery_config = {
 beat_schedule = {
     # ========== 示例任务 ==========
     # 每分钟打印时间
-    "print-time-every-minute": {
-        "task": "celery_app.beats.example.print_time_task",
-        "schedule": 5.0,
-    },
+    # "print-time-every-minute": {
+    #     "task": "celery_app.beats.example.print_time_task",
+    #     "schedule": 5.0,
+    # },
 }
 
 # 时区设置（用于 Beat）

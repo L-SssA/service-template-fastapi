@@ -42,6 +42,7 @@ _env_config = tools.load_toml(env_config_file)
 # service 相关配置
 _service_cfg: dict = _env_config.get("service", {})
 listen_host = _service_cfg.get("listen_host", "0.0.0.0")
+print_host = "127.0.0.1" if listen_host == "0.0.0.0" else listen_host
 listen_port = _service_cfg.get("listen_port", 8800)
 log_level = _service_cfg.get("log_level", "debug")
 reload_debug = _service_cfg.get("reload_debug", False)
