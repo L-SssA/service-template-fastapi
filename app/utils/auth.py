@@ -4,15 +4,8 @@ import bcrypt
 
 from loguru import logger
 from datetime import timedelta, datetime
-from itsdangerous import URLSafeTimedSerializer
 
 import app.config as config
-
-
-serializer = URLSafeTimedSerializer(
-    secret_key=config.jwt_secret_key,
-    salt="email-configuration"
-)
 
 
 def generate_password_hash(password: str) -> str:
@@ -59,13 +52,12 @@ def create_access_token(
     # 是否刷新
     payload["refresh"] = refresh
 
-    token = jwt.encode(
+    return jwt.encode(
         payload=payload,
         key=config.jwt_secret_key,
         algorithm=config.jwt_algorithm,
     )
 
-    return token
 
 def create_token_pairs(user_data: dict):
     """
@@ -98,13 +90,40 @@ def decode_token(token: str) -> dict:
         return None
 
 
-def create_url_safe_token(data: dict):
-    return serializer.dumps(data)
+def create_url_safe_token(
+    data: dict,
+    expiry: timedelta = timedelta(seconds=config.jwt_expiry_seconds),
+    scope: str = "default"
+):
+    payload = {}
+
+    # 用户数据
+    payload["data"] = data
+    # 过期时间
+    payload["exp"] = datetime.now() + expiry
+    # uuid
+    payload["jti"] = str(uuid.uuid4())
+    # 隔离标识，防止不同场景生成的令牌可以被复用
+    payload["scope"] = scope
+
+    return jwt.encode(
+        payload=payload,
+        key=config.jwt_secret_key,
+        algorithm=config.jwt_algorithm,
+    )
 
 
-def decode_url_safe_token(token: str):
+def decode_url_safe_token(token: str, scope: str = "default"):
     try:
-        return serializer.loads(token)
-    except Exception as e:
+        token_data = jwt.decode(
+            jwt=token,
+            key=config.jwt_secret_key,
+            algorithms=[config.jwt_algorithm],
+        )
+        token_scope = token_data.get("scope")
+        if token_scope != scope:
+            return {}
+        return token_data.get("data")
+    except jwt.PyJWTError as e:
         logger.error(e)
-        return None
+        return {}

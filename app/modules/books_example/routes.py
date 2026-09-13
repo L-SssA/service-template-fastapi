@@ -31,12 +31,11 @@ async def get_all_books(
     return http_utils.get_response(code=200, data=books, message="操作成功")
 
 
-@router.get("/user/{user_uid}", summary="查询用户提交的书籍", response_model=AllBooksResponse, dependencies=[Depends(role_checker)])
+@router.get("/user/{user_uid}", summary="查询用户提交的书籍", response_model=AllBooksResponse, dependencies=[Depends(access_token_bearer), Depends(role_checker)])
 @exception_handler("查询用户提交的书籍")
 async def get_user_book_submissions(
     user_uid: str,
     session: AsyncSession = Depends(get_session),
-    token_details: dict = Depends(access_token_bearer),
 ):
     books = await book_service.get_user_books(user_uid, session)
     return http_utils.get_response(code=200, data=books, message="操作成功")

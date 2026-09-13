@@ -49,7 +49,7 @@ async def create_user_account(
     new_user = await user_service.create_user(user_data, session)
 
     # 发送验证邮件
-    verify_token = create_url_safe_token({"email": email})
+    verify_token = create_url_safe_token({"email": email}, scope="signup")
     link = f"http://{config.print_host}:{config.listen_port}/auth/verify/{verify_token}"
     html_message = f"""
     <h1>验证邮箱</h1>
@@ -71,8 +71,8 @@ async def create_user_account(
 @router.get("/verify/{verify_token}", summary="验证邮箱")
 @exception_handler("验证邮箱")
 async def verify_email(verify_token: str, session: AsyncSession = Depends(get_session)):
-    token_data = decode_url_safe_token(verify_token)
-    user_email = token_data.get("email")
+    token_data = decode_url_safe_token(verify_token, scope="signup")
+    user_email = token_data.get("email", None)
     if user_email:
         user = await user_service.get_user_by_email(user_email, session)
         if not user:
@@ -171,7 +171,8 @@ async def password_reset_request(
     email_data: PasswordResetRequestModel,
 ):
     email = email_data.email
-    verify_token = create_url_safe_token({"email": email})
+    verify_token = create_url_safe_token(
+        {"email": email}, scope="reset_password")
     link = f"http://{config.print_host}:{config.listen_port}/auth/password-reset-confirm/{verify_token}"
     html_message = f"""
         <h1>重置您的密码</h1>
@@ -198,8 +199,8 @@ async def reset_password(verify_token: str, password: PasswordResetConfirmModel,
     if new_password != confirm_new_password:
         return http_utils.get_response(code=400, message="两次输入的密码不一致")
 
-    token_data = decode_url_safe_token(verify_token)
-    user_email = token_data.get("email")
+    token_data = decode_url_safe_token(verify_token, scope="reset_password")
+    user_email = token_data.get("email", None)
     if user_email:
         user = await user_service.get_user_by_email(user_email, session)
         if not user:
