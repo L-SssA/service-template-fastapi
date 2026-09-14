@@ -43,6 +43,8 @@ services:
     depends_on:
       - redis
       - postgres
+    environment:
+      - ENV=prod
     command: ["python", "api_server.py"]
 
   celery_server:
@@ -56,4 +58,6 @@ services:
     depends_on:
       - redis
       - postgres
+    environment:
+      - ENV=prod
     command: ["python", "./celery_server.py"]

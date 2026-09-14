@@ -17,13 +17,13 @@ service-template-fastapi/
 │   ├── routers.py                 # 自动扫描 app/modules 中的 routes.py 并装配 root_router
 │   ├── server.py                  # FastAPI 实例、life_span 与静态资源挂载
 │   ├── db/                        # 数据库与 Redis 连接能力
-│   ├── modules/           # 业务模块
+│   ├── modules/                   # 业务模块
 │   │   └── module_name/
 │   │       ├── __init__.py
-│   │       ├── models.py  # 数据库模型
-│   │       ├── routes.py  # 路由定义
-│   │       ├── schemas.py # 数据结构定义
-│   │       └── service.py # 业务逻辑
+│   │       ├── models.py         # 数据库模型
+│   │       ├── routes.py         # 路由定义
+│   │       ├── schemas.py        # 数据结构定义
+│   │       └── service.py        # 业务逻辑
 │   ├── shared/                    # 公共接口、基类、路由工厂等共享能力
 │   └── utils/                     # 工具函数
 ├── celery_app/                    # Celery 应用包
@@ -38,6 +38,10 @@ service-template-fastapi/
 ├── config.dev.toml                # 开发环境配置
 ├── config.example.toml            # 配置示例文件
 ├── main.py                         # 入口文件：拉起 FastAPI 与 Celery Worker/Beat
+├── api_server.py                  # 仅启动 FastAPI 服务的部署入口
+├── celery_server.py               # 仅启动 Celery Worker/Beat 的部署入口
+├── Dockerfile                     # 容器镜像构建文件
+├── docker-compose.yml             # 本地/部署编排文件
 ├── pyproject.toml                 # 项目配置和依赖
 └── uv.toml                         # uv 工具配置
 ```
@@ -482,6 +486,12 @@ logger.error("数据库连接失败")
 - 使用 TOML 文件管理配置
 - 不同环境使用不同的配置文件（`config.dev.toml`, `config.prod.toml`）
 - 敏感信息通过环境变量覆盖
+
+### 6.6 部署入口与容器化
+
+- 项目根目录已提供独立部署入口：`api_server.py` 负责单独启动 FastAPI 服务，`celery_server.py` 负责单独启动 Celery Worker/Beat。
+- 项目同时包含 `Dockerfile` 与 `docker-compose.yml`，可通过镜像构建和 Compose 编排完成本地或生产环境部署。
+- `docker-compose.yml` 默认编排 `redis`、`postgres`、`api_server` 与 `celery_server` 四个服务，便于在统一环境中联动启动数据库、缓存与应用进程。
 
 ---
 

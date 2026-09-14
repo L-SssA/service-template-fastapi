@@ -24,13 +24,13 @@ service-template-fastapi/
 │   ├── routers.py                 # 自动扫描 app/modules 中的 routes.py 并装配 root_router
 │   ├── server.py                  # FastAPI 实例、life_span 与静态资源挂载
 │   ├── db/                        # 数据库与 Redis 连接能力
-│   ├── modules/           # 业务模块
+│   ├── modules/                   # 业务模块
 │   │   └── module_name/
 │   │       ├── __init__.py
-│   │       ├── models.py  # 数据库模型
-│   │       ├── routes.py  # 路由定义
-│   │       ├── schemas.py # 数据结构定义
-│   │       └── service.py # 业务逻辑
+│   │       ├── models.py         # 数据库模型
+│   │       ├── routes.py         # 路由定义
+│   │       ├── schemas.py        # 数据结构定义
+│   │       └── service.py        # 业务逻辑
 │   ├── shared/                    # 公共接口、基类、路由工厂等共享能力
 │   └── utils/                     # 工具函数
 ├── celery_app/                    # Celery 应用包
@@ -45,6 +45,10 @@ service-template-fastapi/
 ├── config.dev.toml                # 开发环境配置
 ├── config.example.toml            # 配置示例文件
 ├── main.py                         # 入口文件：拉起 FastAPI 与 Celery Worker/Beat
+├── api_server.py                  # 仅启动 FastAPI 服务的部署入口
+├── celery_server.py               # 仅启动 Celery Worker/Beat 的部署入口
+├── Dockerfile                     # 容器镜像构建文件
+├── docker-compose.yml             # 本地/部署编排文件
 ├── pyproject.toml                 # 项目配置和依赖
 └── uv.toml                         # uv 工具配置
 ```
@@ -93,12 +97,41 @@ uv run python main.py
 
 如果 Redis 和 Celery Worker 已就绪，应用启动时会通过 `app.utils.celery_client` 检查连接并打印：`检测到 X 个活跃的 Celery Worker`。
 
+#### 独立部署入口
+
+仓库额外提供了两个独立部署入口：
+
+```bash
+# 单独启动 API 服务
+uv run python api_server.py
+
+# 单独启动 Celery Worker + Beat
+uv run python celery_server.py
+```
+
+这两种入口适合在容器化部署或当需要把 API 与任务处理拆开部署时使用。
+
 #### 生产模式
 
 ```bash
 # 通过环境变量切换配置文件，例如：ENV=prod
 ENV=prod uv run python main.py
 ```
+
+### Docker Compose 部署
+
+项目根目录已经包含 `Dockerfile` 与 `docker-compose.yml`，可直接通过容器编排方式拉起 Redis、Postgres、FastAPI API 和 Celery 服务：
+
+```bash
+docker compose up --build
+```
+
+其中：
+
+- `redis`：消息代理与任务结果缓存
+- `postgres`：主数据库服务
+- `api_server`：统一的 FastAPI 服务
+- `celery_server`：独立 Celery Worker/Beat 任务服务
 
 ### 访问接口文档
 
