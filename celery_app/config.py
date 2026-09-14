@@ -7,26 +7,19 @@ class EnvSettings(BaseSettings):
     """环境标识"""
     ENV: str = "dev"
 
-    """PGSQL 配置"""
-    PGSQL_USERNAME: str = ""
-    PGSQL_PASSWORD: str = ""
-
-    """JWT 配置"""
-    JWT_SECRET: str = ""
-
     """MAIL 配置"""
     MAIL_USERNAME: str = ""
     MAIL_PASSWORD: str = ""
     MAIL_FROM: str = ""
 
     model_config = SettingsConfigDict(
-        env_file='.env', env_file_encoding='utf-8')
+        env_file='.env', extra='ignore', env_file_encoding='utf-8')
 
 
 env_settings = EnvSettings()
 
 # 加载配置文件
-env = os.getenv("ENV", "dev")
+env = env_settings.ENV
 env_config_file = os.path.join(os.path.dirname(
     os.path.dirname(__file__)), f"config.{env}.toml")
 _env_config = tools.load_toml(env_config_file)

@@ -13,13 +13,8 @@ class EnvSettings(BaseSettings):
     """JWT 配置"""
     JWT_SECRET: str = ""
 
-    """MAIL 配置"""
-    MAIL_USERNAME: str = ""
-    MAIL_PASSWORD: str = ""
-    MAIL_FROM: str = ""
-
     model_config = SettingsConfigDict(
-        env_file='.env', env_file_encoding='utf-8')
+        env_file='.env', extra='ignore', env_file_encoding='utf-8')
 
 
 env_settings = EnvSettings()
@@ -70,13 +65,3 @@ jwt_secret_key = _auth_cfg.get("jwt_secret", "") or env_settings.JWT_SECRET
 jwt_algorithm = _auth_cfg.get("jwt_algorithm", "HS256")
 jwt_expiry_seconds = _auth_cfg.get("jwt_expiry_seconds", 3600)
 jwt_refresh_expiry_seconds = _auth_cfg.get("jwt_refresh_expiry_seconds", 86400)
-
-# mail 相关配置
-_mail_cfg: dict = _env_config.get("mail", {})
-mail_username = _mail_cfg.get("username", "") or env_settings.MAIL_USERNAME
-mail_password = _mail_cfg.get("password", "") or env_settings.MAIL_PASSWORD
-mail_server = _mail_cfg.get("mail_server", "")
-mail_port = _mail_cfg.get("mail_port", 465)
-mail_from = _mail_cfg.get(
-    "mail_from", "") or env_settings.MAIL_FROM
-mail_from_name = _mail_cfg.get("mail_from_name", "")

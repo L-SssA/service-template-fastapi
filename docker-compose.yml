@@ -29,3 +29,31 @@ services:
       # - ./postgres_data:/var/lib/postgresql/data
       # version 18+
       - ./postgres_data:/var/lib/postgresql
+
+  api_server:
+    build:
+      context: .
+    image: server-image
+    container_name: api-server
+    restart: unless-stopped
+    ports:
+      - "8800:8800"
+    volumes:
+      - ./:/app
+    depends_on:
+      - redis
+      - postgres
+    command: ["python", "api_server.py"]
+
+  celery_server:
+    build:
+      context: .
+    image: server-image
+    container_name: celery-server
+    restart: unless-stopped
+    volumes:
+      - ./:/app
+    depends_on:
+      - redis
+      - postgres
+    command: ["python", "./celery_server.py"]
