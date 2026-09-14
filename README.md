@@ -17,35 +17,36 @@
 
 ```
 service-template-fastapi/
-├── app/                    # 应用核心代码
-│   ├── config.py          # 全局配置与环境变量读取
-│   ├── routers.py         # 自动扫描 app/modules 中的 route 模块并装配 root_router
-│   ├── server.py          # FastAPI 应用实例与全局异常处理
-│   ├── db/                # 数据库与 Redis 连接能力
+├── app/                           # 应用核心代码
+│   ├── config.py                  # 环境变量、项目配置与全局参数读取
+│   ├── exceptions.py              # 全局异常处理注册
+│   ├── middlewares.py             # 中间件注册
+│   ├── routers.py                 # 自动扫描 app/modules 中的 routes.py 并装配 root_router
+│   ├── server.py                  # FastAPI 实例、life_span 与静态资源挂载
+│   ├── db/                        # 数据库与 Redis 连接能力
 │   ├── modules/           # 业务模块
 │   │   └── module_name/
 │   │       ├── __init__.py
+│   │       ├── models.py  # 数据库模型
 │   │       ├── routes.py  # 路由定义
 │   │       ├── schemas.py # 数据结构定义
-│   │       ├── service.py # 业务逻辑
-│   │       └── dependencies.py  # 认证/角色依赖（按需存在）
-│   ├── shared/            # 公共接口、基类、路由工厂
-│   └── utils/             # 工具函数
-├── celery_app/            # Celery 应用包
-│   ├── config.py          # Celery 配置与 Beat schedule
-│   ├── server.py          # Celery 实例创建与自动加载任务
-│   └── tasks/             # 任务定义
-│       ├── __init__.py
-│       ├── example.py
-│       └── example_beats.py
-├── migrations/            # Alembic 数据库迁移目录
-├── public/                # 静态资源
-├── docs/                  # 文档目录
-├── scripts/               # 脚本目录
-├── config.dev.toml        # 开发环境配置
-├── main.py                # 应用入口文件（启动 FastAPI 与 Celery）
-├── pyproject.toml         # 项目配置和依赖
-└── uv.toml                # uv 工具配置
+│   │       └── service.py # 业务逻辑
+│   ├── shared/                    # 公共接口、基类、路由工厂等共享能力
+│   └── utils/                     # 工具函数
+├── celery_app/                    # Celery 应用包
+│   ├── config.py                  # Celery 配置与 Beat schedule
+│   ├── server.py                  # Celery 实例创建与自动加载任务
+│   └── tasks/                     # 任务定义
+├── migrations/                    # Alembic 数据库迁移目录
+├── public/                        # 静态资源目录
+├── docs/                          # 文档目录
+├── scripts/                       # 脚本目录
+├── tests/                         # 测试目录
+├── config.dev.toml                # 开发环境配置
+├── config.example.toml            # 配置示例文件
+├── main.py                         # 入口文件：拉起 FastAPI 与 Celery Worker/Beat
+├── pyproject.toml                 # 项目配置和依赖
+└── uv.toml                         # uv 工具配置
 ```
 
 ## 快速开始
@@ -214,7 +215,7 @@ uv run python main.py
    - 访问 Swagger UI: http://localhost:8800/docs
    - 查看 `/celery/*` 端点（创建任务）
    - 查看 `/tasks/*` 端点（任务管理）
-   - 或在代码中使用 `app.utils.celery_client.send_task()`
+   - 或在代码中使用 `from app.utils.celery_client import celery_client`，再通过 `celery_client.send_task(...)` 发起任务
 
 ### 详细文档
 

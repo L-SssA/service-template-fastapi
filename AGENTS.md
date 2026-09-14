@@ -10,43 +10,44 @@
 
 ```
 service-template-fastapi/
-├── app/                    # 应用核心代码
-│   ├── config.py          # 全局配置与环境变量读取
-│   ├── routers.py         # 自动扫描 app/modules 中的 route 模块并装配 root_router
-│   ├── server.py          # FastAPI 应用实例与全局异常处理
-│   ├── db/                # 数据库与 Redis 连接能力
+├── app/                           # 应用核心代码
+│   ├── config.py                  # 环境变量、项目配置与全局参数读取
+│   ├── exceptions.py              # 全局异常处理注册
+│   ├── middlewares.py             # 中间件注册
+│   ├── routers.py                 # 自动扫描 app/modules 中的 routes.py 并装配 root_router
+│   ├── server.py                  # FastAPI 实例、life_span 与静态资源挂载
+│   ├── db/                        # 数据库与 Redis 连接能力
 │   ├── modules/           # 业务模块
 │   │   └── module_name/
 │   │       ├── __init__.py
+│   │       ├── models.py  # 数据库模型
 │   │       ├── routes.py  # 路由定义
 │   │       ├── schemas.py # 数据结构定义
-│   │       ├── service.py # 业务逻辑
-│   │       └── dependencies.py  # 认证/角色依赖（按需存在）
-│   ├── shared/            # 公共接口、基类、路由工厂
-│   └── utils/             # 工具函数
-├── celery_app/            # Celery 应用包
-│   ├── config.py          # Celery 配置与 Beat schedule
-│   ├── server.py          # Celery 实例创建与自动加载任务
-│   └── tasks/             # 任务定义
-│       ├── __init__.py
-│       ├── example.py
-│       └── example_beats.py
-├── migrations/            # Alembic 数据库迁移目录
-├── public/                # 静态资源
-├── docs/                  # 文档目录
-├── scripts/               # 脚本目录
-├── config.dev.toml        # 开发环境配置
-├── main.py                # 应用入口文件（启动 FastAPI 与 Celery）
-├── pyproject.toml         # 项目配置和依赖
-└── uv.toml                # uv 工具配置
+│   │       └── service.py # 业务逻辑
+│   ├── shared/                    # 公共接口、基类、路由工厂等共享能力
+│   └── utils/                     # 工具函数
+├── celery_app/                    # Celery 应用包
+│   ├── config.py                  # Celery 配置与 Beat schedule
+│   ├── server.py                  # Celery 实例创建与自动加载任务
+│   └── tasks/                     # 任务定义
+├── migrations/                    # Alembic 数据库迁移目录
+├── public/                        # 静态资源目录
+├── docs/                          # 文档目录
+├── scripts/                       # 脚本目录
+├── tests/                         # 测试目录
+├── config.dev.toml                # 开发环境配置
+├── config.example.toml            # 配置示例文件
+├── main.py                         # 入口文件：拉起 FastAPI 与 Celery Worker/Beat
+├── pyproject.toml                 # 项目配置和依赖
+└── uv.toml                         # uv 工具配置
 ```
 
 ### 1.2 关键目录说明
 
 - **`app/modules/`**: 存放所有业务模块，每个模块独立管理自己的路由、模型、服务和数据结构
 - **`app/shared/`**: 存放跨模块共享的接口和数据结构
-- **`app/utils/`**: 存放通用工具函数
-- **`app/config/`**: 存放配置管理相关代码
+- **`app/utils/`**: 存放通用工具函数与 Celery 客户端封装
+- **`app/config.py`**: 读取环境变量、项目配置与全局参数，提供服务、SQL、Redis、认证、邮件等配置入口
 - **`celery_app/`**: 存放 Celery 应用实例、配置与自动加载的任务包
 - **`docs/`**: 存放所有项目文档（除 README.md 外）
 
@@ -202,7 +203,7 @@ def create_router(sign):
 
 ### 4.1 任务定义位置
 
-**所有异步任务必须定义在 `celery_app/tasks/` 目录中**，并由 `celery_app/server.py` 中的 `load_tasks()` 自动发现。
+**所有异步任务必须定义在 `celery_app/tasks/` 目录中**，并由 `celery_app/tasks/__init__.py` 中的 `load_tasks()` 自动发现，再由 `celery_app/server.py` 创建 Celery 应用实例。
 
 ```
 celery_app/
@@ -210,8 +211,9 @@ celery_app/
 ├── server.py          # Celery 实例创建与自动加载任务
 └── tasks/             # 任务定义 ⭐
     ├── __init__.py
-    ├── example.py     # 示例任务
-    └── example_beats.py  # Beat 示例任务
+    ├── example.py     # 示例任务：division_task
+    ├── example_beats.py  # Beat 示例任务：print_time_task
+    └── message.py      # 邮件发送任务：send_message
 ```
 
 ### 4.2 任务编写规范
@@ -243,13 +245,13 @@ def add_task(a: int, b: int) -> int:
 
 ```python
 # app/modules/celery/routes.py
-from app.utils.celery_client import send_task
+from app.utils.celery_client import celery_client
 
 @router.post("/task/add")
 async def run_add_task(a: int, b: int):
     """执行异步加法任务"""
-    task_result = send_task(
-        task_name="celery_app.tasks.example.add_task",
+    task_result = celery_client.send_task(
+        task_name="celery_app.tasks.example.division_task",
         args=[a, b],
         countdown=0  # 延迟执行秒数
     )
@@ -574,8 +576,16 @@ from app.shared.routes import create_router
 from celery_app.server import app as celery_app
 
 # 工具函数
-from app.utils.celery_client import send_task
+from app.utils.celery_client import celery_client
 from app.utils.decorators import exception_handler
+```
+
+```python
+# 真实调用形态
+result = celery_client.send_task(
+    task_name="celery_app.tasks.example.division_task",
+    args=[10, 2],
+)
 ```
 
 ---
