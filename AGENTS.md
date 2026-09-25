@@ -270,7 +270,6 @@ async def run_add_task(a: int, b: int):
 - 任务名称应清晰表达功能
 - 复杂任务应包含进度跟踪和错误处理
 - 使用 `bind=True` 可以访问任务实例（用于更新状态、记录日志等）
-- 参考 [`docs/CELERY_WORKER_USAGE.md`](docs/CELERY_WORKER_USAGE.md) 与 [`docs/CELERY_BEAT_USAGE.md`](docs/CELERY_BEAT_USAGE.md) 获取详细使用指南
 
 ---
 
@@ -285,7 +284,6 @@ async def run_add_task(a: int, b: int):
 
 `docs/` 目录应包含：
 
-- 功能模块详细说明（如 `CELERY_WORKER_USAGE.md`、`CELERY_BEAT_USAGE.md`）
 - API 接口文档（如果超出 README 范围）
 - 部署指南
 - 开发规范

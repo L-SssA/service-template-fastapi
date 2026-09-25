@@ -224,8 +224,6 @@ enable_utc = true
 uv run python main.py
 ```
 
-详细使用指南请参考 [docs/CELERY_BEAT_USAGE.md](docs/CELERY_BEAT_USAGE.md)。
-
 ## 异步任务
 
 本项目集成了 Celery 提供异步任务处理能力。
@@ -249,27 +247,6 @@ uv run python main.py
    - 查看 `/celery/*` 端点（创建任务）
    - 查看 `/tasks/*` 端点（任务管理）
    - 或在代码中使用 `from app.utils.celery_client import celery_client`，再通过 `celery_client.send_task(...)` 发起任务
-
-### 详细文档
-
-- **[Celery Worker 使用指南](docs/CELERY_WORKER_USAGE.md)** - 异步任务执行、配置和最佳实践
-- **[Celery Beat 定时任务使用指南](docs/CELERY_BEAT_USAGE.md)** - 定时任务调度和管理
-
-## 下一步
-
-### 已完成的功能
-
-- [x] 实现定时任务 (Celery Beat) ⭐
-
-### 计划中的功能
-
-- [ ] 添加任务监控面板（如 Flower）
-- [ ] 实现任务优先级队列
-- [ ] 添加任务重试机制和死信队列
-- [ ] 集成任务执行时间统计
-- [ ] 添加任务依赖关系支持
-
----
 
 ## 贡献指南
 
